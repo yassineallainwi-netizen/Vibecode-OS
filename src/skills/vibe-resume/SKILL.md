@@ -7,40 +7,43 @@ allowed-tools: Read, Write, Glob, Grep, Edit
 
 # /vibe-resume — Resume a Previous Session
 
-You are helping a vibe coder pick up where they left off. Your job is to read all context files and give a clear, actionable summary so the user is productive within 30 seconds.
+You are restoring session context for a vibe coder. Read the minimum needed, then give a focused summary so they can start working immediately.
 
 ## Steps
 
 ### 1. Read project context
-- Read `PROJECT_CONTEXT.md` to understand the project.
-- If it doesn't exist or is empty, tell the user: "I don't see a PROJECT_CONTEXT.md yet. Let's set one up — what is this project and what's it built with?" Then create it from their answers.
+Read `PROJECT_CONTEXT.md`.
 
-### 2. Read session history
-- Read `SESSION_LOG.md` to see what happened in previous sessions.
-- If it doesn't exist, note that this appears to be the first session.
+If it's missing or still a blank template (only placeholder text, no real content), say:
+> "No project context yet. What is this project and what's it built with?"
+Then create `PROJECT_CONTEXT.md` from their answer before continuing.
 
-### 3. Find the active feature
-- Read `.claude/active_feature` to find the current feature ID.
-- If the file exists and contains a feature ID, read that feature's `SPEC.md` and `VERIFY.md` (if it exists) from `features/<feature-id>/`.
-- If the file is empty or missing, scan `features/` for any feature folders and check which ones lack a VERIFY.md (likely still in progress). If there's ambiguity, ask the user which feature to resume.
+### 2. Read session log
+Read `SESSION_LOG.md` for the most recent session summary.
 
-### 4. Summarize to the user
-Present a concise summary:
+### 3. Read key decisions
+Read `DECISIONS.md` for any decisions marked as active or recent.
 
-> **Project:** [name from PROJECT_CONTEXT.md]
-> **Last session:** [date and summary from SESSION_LOG.md]
-> **Active feature:** [feature name and goal from SPEC.md]
-> **Completed:** [what's been done/verified]
-> **Still open:** [remaining acceptance criteria or tasks]
-> **Recommended next step:** [your suggestion for what to work on first]
+### 4. Find the active feature
+Read `.claude/active_feature`.
+- If it contains a feature ID, read `features/<feature-id>/SPEC.md`.
+- If it's empty or missing, note that no feature is active — do not scan the repo.
 
-If there's no active feature, say so and suggest either resuming an incomplete feature or starting a new one with `/vibe-start`.
+### 5. Present the summary
+Always use this exact structure:
 
-### 5. Ready to work
-After the summary, be ready to start working. Don't ask for permission to begin — the user called `/vibe-resume` because they want to get going.
+> **Project:** [name and one-line description]
+>
+> **Current state:** [what was happening as of the last session — date and summary]
+>
+> **Active feature:** [feature ID and goal, or "None"]
+>
+> **Important decisions:** [2–3 key decisions from DECISIONS.md that affect current work, or "None logged"]
+>
+> **Next step:** [one concrete action — e.g., "Continue building X" or "Run /vibe-start to begin your first feature"]
 
 ## Rules
-- Be concise. The summary should be scannable in under 10 seconds.
-- Recommend a concrete next step, not a vague "continue working."
-- If a feature was never formally closed (no VERIFY.md, but work was done), mention this and suggest either continuing it or closing it with `/vibe-done`.
-- Never ask the user to re-explain their project. That's what the context files are for.
+- No filler. Lead with facts.
+- Never ask the user to re-explain their project.
+- Do not scan `features/` unless `.claude/active_feature` is missing (that's handled by /vibe-start or /vibe-status).
+- End every response with exactly one recommended next step.

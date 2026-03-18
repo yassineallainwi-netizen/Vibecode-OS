@@ -2,54 +2,54 @@
 name: vibe-status
 description: Check the current status of the active feature or all features. Use when the user wants a progress report.
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep
+allowed-tools: Read, Glob
 ---
 
 # /vibe-status — Check Feature Progress
 
-You are helping a vibe coder understand where their project stands. Your job is to give an honest, actionable progress report.
+You are giving a vibe coder an honest progress report. Be structured and direct.
 
 ## Steps
 
 ### 1. Find the active feature
-- Read `.claude/active_feature` to find the current feature ID.
+Read `.claude/active_feature`.
 
-### 2a. If there IS an active feature
-- Read `features/<feature-id>/SPEC.md` to get the acceptance criteria.
-- Read `features/<feature-id>/VERIFY.md` if it exists to see what's been verified.
-- Compare the acceptance criteria against verification notes.
-- Report in this format:
+### 2a. Active feature exists
+Read `features/<feature-id>/SPEC.md` and `features/<feature-id>/VERIFY.md` (if it exists).
 
-> **Feature:** [name] — [goal]
->
-> **Done and verified:**
-> - [x] [criterion] — [how it was verified]
->
-> **Built but not verified:**
-> - [ ] [criterion] — appears implemented but not yet tested
->
-> **Still open:**
-> - [ ] [criterion] — not yet built
->
-> **Blockers or risks:**
-> - [anything noted in spec or discovered during work]
+Always report in this exact structure:
 
-### 2b. If there is NO active feature
-- Scan all `features/FEATURE-*/` folders.
-- For each, check if VERIFY.md exists and its status (Complete/Partial/Blocked).
-- Report a summary table:
+> **Feature goal:** [one-sentence goal from SPEC.md]
+>
+> **Completed:**
+> - [x] [criterion — how verified, or "built but not tested"]
+>
+> **Missing:**
+> - [ ] [criterion not yet built]
+>
+> **Risks / unknowns:**
+> - [anything from spec or discovered during work, or "None"]
+>
+> **Next step:** [one concrete action]
 
-> **All features:**
+### 2b. No active feature
+Scan `features/FEATURE-*/` folders.
+
+If no folders exist or the folder is empty:
+> "No features have been started yet. Use `/vibe-start` to begin one."
+
+If folders exist, report a summary table:
+
 > | Feature | Status | Notes |
 > |---------|--------|-------|
 > | FEATURE-001-auth-login | Complete | Verified 2026-03-15 |
 > | FEATURE-002-dashboard | Partial | 3 of 5 criteria done |
-> | FEATURE-003-settings | Open | Spec written, no work started |
-
-Then suggest: "Use `/vibe-start` to begin a new feature, or tell me which feature to resume."
+> | FEATURE-003-settings | Open | Spec written, not started |
+>
+> **Next step:** [suggest which feature to resume or use `/vibe-start` for a new one]
 
 ## Rules
-- Be honest. If something isn't verified, say so. Don't assume it works.
-- Keep the report scannable — use the structured format above.
-- This is a read-only command. Do not modify any files.
-- If SPEC.md is missing for a feature folder, note it as "No spec found."
+- Read-only. Never write or modify files.
+- Never say the `features/` folder is missing if it exists but is empty.
+- If SPEC.md is missing for a folder, mark it as "No spec — malformed."
+- End every response with exactly one next step.

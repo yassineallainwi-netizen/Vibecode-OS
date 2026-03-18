@@ -7,64 +7,69 @@ allowed-tools: Read, Write, Glob, Grep, Edit
 
 # /vibe-start — Start a New Feature
 
-You are helping a vibe coder start a new feature. Your job is to gather requirements conversationally and produce a clear spec. The user describes what they want; you draft everything. Never present an empty template.
+You are helping a vibe coder spec a new feature. You gather requirements, draft everything, and ask for confirmation. The user never fills in a template.
 
 ## Steps
 
 ### 1. Read project context
-- Read `PROJECT_CONTEXT.md` in the repo root to understand the project, tech stack, and rules.
-- If `PROJECT_CONTEXT.md` does not exist or is empty, tell the user: "I don't see a PROJECT_CONTEXT.md yet. Let's fill one in quickly — what is this project and what's it built with?" Then create it from their answers before continuing.
+Read `PROJECT_CONTEXT.md`.
 
-### 2. Ask clarifying questions
-Ask the user 2-3 short questions to understand the feature:
-- "What should the user be able to do when this is built?" (the goal)
-- "What specific behaviors or screens does this involve?" (the scope)
-- "Is there anything this should NOT do or touch?" (the boundary)
+If it's missing or still a blank template (only placeholder text, no real content), ask:
+> "What is this project and what's it built with?"
+Create `PROJECT_CONTEXT.md` from their answer, then continue.
 
-Keep it conversational. Don't ask all three at once if the user's initial description already answers some.
+### 2. Understand the feature
+If the user's request is clear enough to draft a spec, go to step 3.
+
+If not, ask at most 2 focused questions — pick the most important gaps:
+- What should the user be able to do when this is built?
+- What should it NOT do or touch?
+
+Do not ask all questions at once if the description already answers some.
 
 ### 3. Determine the feature number
-- Scan the `features/` directory for existing `FEATURE-NNN-*` folders.
-- Pick the next number (e.g., if FEATURE-002 exists, use 003).
-- If no features exist yet, start with 001.
-- Derive a short slug from the user's description (lowercase, hyphens, max 4 words). Example: "user auth login" becomes `auth-login`.
+Scan `features/` for existing `FEATURE-NNN-*` folders. Use the next number. If none exist, start at 001.
+
+Derive a short slug from the user's description (lowercase, hyphens, max 4 words).
 
 ### 4. Draft the SPEC.md
-Create the file `features/FEATURE-NNN-slug/SPEC.md` with this structure:
+Create `features/FEATURE-NNN-slug/SPEC.md`:
 
 ```markdown
-# Feature: [Name from conversation]
+# Feature: [Name]
 
 ## Goal
-[One sentence: what should the user be able to do after this is built?]
+[One sentence: what the user can do after this is built]
 
 ## What it should do
-- [Bullet list of behaviors, drafted from the conversation]
+- [Concrete behavior from the conversation]
 
 ## What it should NOT do
-- [Scope boundaries from the conversation]
+- [Scope boundary]
 
 ## How to verify it works
-- [ ] [Plain language acceptance test]
-- [ ] [Another one]
+- [ ] [Plain-language acceptance test]
 
 ## Risks and edge cases
 - [Anything flagged during the conversation]
 ```
 
-Draft all sections yourself based on the conversation. Fill in concrete details, not placeholders.
+Fill every section with real content from the conversation. No placeholders.
 
 ### 5. Set the active feature
 Write the feature ID (e.g. `FEATURE-003-auth-login`) to `.claude/active_feature`.
 
-### 6. Ask for confirmation
-Show the user the spec you drafted and ask: "Does this look right? Edit anything you want, or say 'go' to lock the spec and start building."
+### 6. Confirm with the user
+Show the spec and ask:
+> "Does this look right? Edit anything you want, or say 'go' to lock it."
 
-- If the user requests changes, update the spec and ask again.
-- Once confirmed, say: "Spec locked. You can start building now. Use `/vibe-status` to check progress and `/vibe-done` when you're finished."
+If they request changes, update and ask again.
+
+Once confirmed, say:
+> "Spec locked. Use `/vibe-status` to track progress and `/vibe-done` when you're finished."
 
 ## Rules
-- You draft everything. The user only confirms, edits, or adds.
-- Never present an empty template or ask the user to fill in sections.
-- Keep the spec concise — no more than a page for simple features.
-- If the user describes something very small (a bug fix, a one-liner), still create the spec but make it proportionally brief.
+- You draft everything. The user only confirms or edits.
+- Never show an empty template.
+- Keep specs concise — one page for simple features.
+- Ask at most 2 questions at a time.
