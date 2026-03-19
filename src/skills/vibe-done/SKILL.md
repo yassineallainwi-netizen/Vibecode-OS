@@ -10,7 +10,7 @@ allowed-tools: Read, Write, Glob, Edit
 You are closing out a feature. Collect evidence, verify against acceptance criteria, classify honestly, and write a concise record.
 
 ## Feature scan rule
-When scanning `features/`, only consider directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories and files.
+When scanning `features/` in the **project root**, only consider directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories and files.
 
 ## Steps
 
@@ -22,7 +22,7 @@ Read `.claude/active_feature`.
 Clear `.claude/active_feature`, then scan `features/` for valid folders without a `VERIFY.md`. If one exists, ask the user if they want to close it. If none exist, say "Nothing to close. Use `/vibe-start`." Stop here.
 
 **If empty or missing:**
-Scan `features/` for valid folders without a `VERIFY.md`. If one exists, use it. If multiple exist, ask which one to close. If none, say "Nothing to close. Use `/vibe-start`."
+Scan `features/` in the **project root** for valid folders without a `VERIFY.md`. If one exists, use it. If multiple exist, ask which one to close. If none, say "Nothing to close. Use `/vibe-start`."
 
 **Once a feature is identified — read its SPEC.md:**
 
@@ -126,7 +126,7 @@ After writing VERIFY.md, check: did the completed work introduce a meaningful de
 
 **If no meaningful decision exists:** do nothing. Do not write to `DECISIONS.md`.
 
-**If a meaningful decision exists:** append a short entry to `DECISIONS.md`:
+**If a meaningful decision exists:** append a short entry to `DECISIONS.md` in the **project root**:
 
 ```markdown
 ## Decision NNN
@@ -137,12 +137,12 @@ After writing VERIFY.md, check: did the completed work introduce a meaningful de
 - Tradeoff: [what was given up, or "None"]
 ```
 
-**First-entry cleanup rule:** If `DECISIONS.md` is still in blank template state (contains only `[TODO:` markers), remove all placeholder content and replace with the first real entry. Do not mix real decisions with blank-state markers.
+**First-entry cleanup rule:** If `DECISIONS.md` in the **project root** is still in blank template state (contains only `[TODO:` markers), remove all placeholder content and replace with the first real entry. Do not mix real decisions with blank-state markers.
 
 Number decisions sequentially from the last existing entry. If no entries exist, start at 001.
 
 ### 7. Update SESSION_LOG.md (compressed)
-SESSION_LOG.md keeps entries newest-first. SESSION_ARCHIVE.md keeps entries oldest-first.
+Update `SESSION_LOG.md` in the **project root**. SESSION_LOG.md keeps entries newest-first. SESSION_ARCHIVE.md keeps entries oldest-first.
 
 **Write the new entry at the top of the log, below the `# Session Log` heading:**
 

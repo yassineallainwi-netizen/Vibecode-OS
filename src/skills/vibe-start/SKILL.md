@@ -15,14 +15,14 @@ A file is a blank placeholder if it contains only headings, empty lines, or line
 ## Steps
 
 ### 1. Read project context
-Read `PROJECT_CONTEXT.md`.
+Read the file `PROJECT_CONTEXT.md` in the **project root directory** (same level as `.claude/` folder, not inside it).
 
 If it's missing or a blank placeholder, ask:
 > "What is this project and what's it built with?"
 Create `PROJECT_CONTEXT.md` from their answer, then continue.
 
 ### 1.5. Check for active feature conflict
-Read `.claude/active_feature`.
+Read the file `.claude/active_feature`.
 
 **If it contains a valid feature ID and that folder exists:**
 > ⚠️ VibeCode Recovery: You have an active feature: `FEATURE-NNN-slug`. Close it with `/vibe-done`, or reply **override** to start a new one anyway.
@@ -111,7 +111,7 @@ If not, ask at most 2 focused questions — pick the most important gaps:
 The user should be able to confirm with a very short reply. Do not ask all questions at once if the description already answers some.
 
 ### 4. Determine the feature number (normal path)
-Scan `features/` for directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Use the next number. If none exist, start at 001.
+Scan `features/` in the **project root** for directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Use the next number. If none exist, start at 001.
 
 Derive a short slug from the user's description (lowercase, hyphens, max 4 words).
 

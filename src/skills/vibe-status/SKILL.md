@@ -15,7 +15,7 @@ When scanning `features/`, only consider directories strictly matching `FEATURE-
 ## Steps
 
 ### 1. Find the active feature
-Read `.claude/active_feature`.
+Read the file `.claude/active_feature`.
 
 **If it contains a feature ID but that folder does not exist:**
 > ⚠️ VibeCode Recovery: Active feature reference is broken — `FEATURE-NNN-slug` doesn't exist.
@@ -64,7 +64,7 @@ Do not assume criteria are satisfied based on conversational guessing. Require f
 - Keep the report compact and actionable
 
 ### 2b. No active feature
-Scan `features/` using the feature scan rule above.
+Scan `features/` in the **project root** using the feature scan rule above.
 
 If no valid folders exist:
 > "No features have been started yet. Use `/vibe-start` to begin one."

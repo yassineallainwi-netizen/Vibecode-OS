@@ -34,7 +34,7 @@ Do not use vague phrases like "this file hasn't been set up yet." Be specific ab
 ## Steps
 
 ### 1. Read project context
-Read `PROJECT_CONTEXT.md`.
+Read the file `PROJECT_CONTEXT.md` in the **project root directory** (same level as `.claude/` folder, not inside it).
 
 If it's missing or a blank placeholder, do not draft content. Explain why you're treating it as blank, then ask 2–3 focused questions:
 > "I still see `[TODO:]` markers in `PROJECT_CONTEXT.md`, so I'm treating it as blank. To get started:
@@ -45,16 +45,16 @@ If it's missing or a blank placeholder, do not draft content. Explain why you're
 Wait for the user to answer, then continue to step 2 using their answers as context for the summary only. Do not write anything.
 
 ### 2. Read session log
-Read `SESSION_LOG.md`. Note the most recent session entry if one exists. If it's a blank placeholder, say so explicitly.
+Read the file `SESSION_LOG.md` in the **project root directory**. Note the most recent session entry if one exists. If it's a blank placeholder, say so explicitly.
 
 ### 3. Read key decisions
-Read `DECISIONS.md`. Note any decisions that are not blank placeholders. If blank, say so explicitly (e.g., "I still see `[TODO:]` markers in `DECISIONS.md`, so no real decisions are logged yet.").
+Read the file `DECISIONS.md` in the **project root directory**. Note any decisions that are not blank placeholders. If blank, say so explicitly (e.g., "I still see `[TODO:]` markers in `DECISIONS.md`, so no real decisions are logged yet.").
 
 ### 4. Find the active feature
 
-**First: always Glob `features/FEATURE-*` to scan for valid feature directories** (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). This is the ground-truth scan. Ignore all other directories or files. Record all matches.
+**First: always Glob `features/FEATURE-*` to scan for valid feature directories in the project root** (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). This is the ground-truth scan. Ignore all other directories or files. Record all matches.
 
-Then read `.claude/active_feature`.
+Then read the file `.claude/active_feature`.
 
 **If `.claude/active_feature` contains a feature ID:**
 - If that folder exists in your ground-truth scan → read and report its SPEC.md
