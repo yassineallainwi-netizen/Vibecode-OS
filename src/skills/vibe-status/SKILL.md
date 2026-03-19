@@ -10,7 +10,7 @@ allowed-tools: Read, Glob
 You are giving a vibe coder an honest progress report. Be structured and direct.
 
 ## Feature scan rule
-When scanning `features/`, only consider directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories and files.
+To find features: Glob `**/SPEC.md`, then filter results to paths matching `features/FEATURE-NNN-slug/SPEC.md` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore any SPEC.md outside this pattern.
 
 ## Steps
 
@@ -64,7 +64,7 @@ Do not assume criteria are satisfied based on conversational guessing. Require f
 - Keep the report compact and actionable
 
 ### 2b. No active feature
-Scan `features/` in the **project root** using the feature scan rule above.
+Glob `**/SPEC.md` and apply the feature scan rule above.
 
 If no valid folders exist:
 > "No features have been started yet. Use `/vibe-start` to begin one."

@@ -10,7 +10,7 @@ allowed-tools: Read, Write, Glob, Edit
 You are closing out a feature. Collect evidence, verify against acceptance criteria, classify honestly, and write a concise record.
 
 ## Feature scan rule
-When scanning `features/` in the **project root**, only consider directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories and files.
+To find features: Glob `**/SPEC.md`, then filter results to paths matching `features/FEATURE-NNN-slug/SPEC.md` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore any SPEC.md outside this pattern. A feature "has no VERIFY.md" if no corresponding `features/FEATURE-NNN-slug/VERIFY.md` exists — check with Glob `**/VERIFY.md`.
 
 ## Steps
 
@@ -22,7 +22,7 @@ Read `.claude/active_feature`.
 Clear `.claude/active_feature`, then scan `features/` for valid folders without a `VERIFY.md`. If one exists, ask the user if they want to close it. If none exist, say "Nothing to close. Use `/vibe-start`." Stop here.
 
 **If empty or missing:**
-Scan `features/` in the **project root** for valid folders without a `VERIFY.md`. If one exists, use it. If multiple exist, ask which one to close. If none, say "Nothing to close. Use `/vibe-start`."
+Glob `**/SPEC.md` and apply the feature scan rule to find valid features. Check `**/VERIFY.md` to identify those without a VERIFY.md. If one exists, use it. If multiple exist, ask which one to close. If none, say "Nothing to close. Use `/vibe-start`."
 
 **Once a feature is identified — read its SPEC.md:**
 

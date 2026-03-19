@@ -52,27 +52,27 @@ Read the file `DECISIONS.md` in the **project root directory**. Note any decisio
 
 ### 4. Find the active feature
 
-**First: always Glob `features/FEATURE-*` to scan for valid feature directories in the project root** (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). This is the ground-truth scan. Ignore all other directories or files. Record all matches.
+**First: always Glob `**/SPEC.md` to discover all feature SPEC files in the project.** Filter results to only those whose path matches `features/FEATURE-NNN-slug/SPEC.md` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). This is the ground-truth scan. Ignore any SPEC.md files outside of `features/FEATURE-*` directories. Record all matching feature IDs.
 
 Then read the file `.claude/active_feature`.
 
 **If `.claude/active_feature` contains a feature ID:**
-- If that folder exists in your ground-truth scan → read and report its SPEC.md
-- If that folder does NOT exist → ⚠️ VibeCode Recovery: the reference is broken. Clear `.claude/active_feature` and fall through to use the ground-truth scan below.
+- If that feature ID appears in your ground-truth scan → read and report its SPEC.md
+- If that feature ID does NOT appear → ⚠️ VibeCode Recovery: the reference is broken. Clear `.claude/active_feature` and fall through to use the ground-truth scan below.
 
 **If `.claude/active_feature` is missing or empty (or just cleared above):**
 Use your ground-truth scan:
-- 0 valid folders → "No features have been started yet. Use `/vibe-start` to begin one."
-- 1 valid folder → "Found `FEATURE-NNN-slug`. Resume it, or start a new feature with `/vibe-start`?"
-- 2+ valid folders → suggest the highest-numbered, list up to 2 others, ask which to resume.
+- 0 matching features → "No features have been started yet. Use `/vibe-start` to begin one."
+- 1 matching feature → "Found `FEATURE-NNN-slug`. Resume it, or start a new feature with `/vibe-start`?"
+- 2+ matching features → suggest the highest-numbered, list up to 2 others, ask which to resume.
 
-**If the identified feature has no `SPEC.md`:**
+**If the identified feature has a malformed path (SPEC.md found but in unexpected location):**
 > ⚠️ VibeCode Recovery: Feature `FEATURE-NNN-slug` exists but has no SPEC.md — it's malformed.
 > Reply **Delete and reset** to clear the active feature reference (clears `.claude/active_feature` only — no files are deleted), or write a spec manually.
 
 Stop here and wait for the user's reply. If they reply "Delete and reset", write an empty string to `.claude/active_feature`. That is the only write allowed. Then continue to Step 5.
 
-**If the identified feature has a `SPEC.md`:** read it and proceed to Step 5.
+**Once a feature is identified and its SPEC.md is found:** read it and proceed to Step 5.
 
 ### 5. Present the summary
 Summarize only what is directly supported by the files you read. Do not invent details.

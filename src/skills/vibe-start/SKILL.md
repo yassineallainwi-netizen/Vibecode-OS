@@ -75,7 +75,7 @@ Short wording alone does not make a feature trivial.
 If the request is safely classified as trivial:
 
 1. **Do not ask clarifying questions** unless absolutely necessary.
-2. **Determine the feature number:** Scan `features/` for directories matching `FEATURE-NNN-slug`. Use the next number. If none exist, start at 001. Derive a short slug (lowercase, hyphens, max 4 words).
+2. **Determine the feature number:** Glob `**/SPEC.md`, filter to paths matching `features/FEATURE-NNN-slug/SPEC.md`. Count existing features to determine next number. If none exist, start at 001. Derive a short slug (lowercase, hyphens, max 4 words).
 3. **Write SPEC.md immediately** using this parse-compatible format:
 
 ```markdown
@@ -111,7 +111,7 @@ If not, ask at most 2 focused questions — pick the most important gaps:
 The user should be able to confirm with a very short reply. Do not ask all questions at once if the description already answers some.
 
 ### 4. Determine the feature number (normal path)
-Scan `features/` in the **project root** for directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Use the next number. If none exist, start at 001.
+Glob `**/SPEC.md`, filter to paths matching `features/FEATURE-NNN-slug/SPEC.md` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Count existing features to determine next number. If none exist, start at 001.
 
 Derive a short slug from the user's description (lowercase, hyphens, max 4 words).
 
