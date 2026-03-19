@@ -1,11 +1,8 @@
 # Session Log
 
 ## Latest Session
-- Date: [date]
-- Feature: [feature ID or "none"]
-- What happened: [summary]
-- What was tested: [what was verified]
-- Still open: [remaining work]
-- Next step: [recommendation]
+- [TODO: what changed]
+- [TODO: what's still open]
+- [TODO: next step]
 
-## Previous Sessions
+Maximum 3 bullets per session. Older entries auto-roll to SESSION_ARCHIVE.md after 10 sessions.

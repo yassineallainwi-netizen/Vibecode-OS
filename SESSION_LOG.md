@@ -36,7 +36,7 @@
   - src/templates/DECISIONS.md
   - src/templates/SESSION_LOG.md
   - install.py
-- Next step: Test each skill in a real Claude Code session (install tested and passing — see below)
+- Next step: Implement FEATURE-002, 003, 004 in order
 
 ## Verification done this session
 - install.py on fresh git repo: all 10 items created (PASS)
@@ -45,7 +45,15 @@
 - /vibe-start on empty install: correctly prompted for PROJECT_CONTEXT.md before proceeding (PASS)
 - /vibe-status on empty install: correctly reported no features, suggested next step (PASS)
 - /vibe-done on empty install: correctly refused with no active feature, clear guidance (PASS)
-- Still needed: end-to-end test of /vibe-start → build → /vibe-done to verify active_feature tracking and auto-numbering
+- /vibe-start end-to-end: wrote SPEC.md to features/FEATURE-001-bootstrap/, set .claude/active_feature correctly (PASS)
+- Active feature tracking and auto-numbering: confirmed working (PASS)
+- All 10 acceptance criteria for FEATURE-001-core-skills: PASS
+
+## Decision: Split FEATURE-002-workflow-polish into 3 focused features
+- FEATURE-002-skill-ux-polish: wording, output contracts, token efficiency
+- FEATURE-003-recovery-rules: deterministic broken-state recovery
+- FEATURE-004-docs-and-qa: templates, README, manual QA checklist
+- Rationale: smaller features are easier to spec, verify, and merge independently
 
 ---
 

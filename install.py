@@ -10,6 +10,11 @@ import shutil
 import sys
 
 
+def read_file(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def main():
     target = os.getcwd()
     src_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,13 +30,15 @@ def main():
         print()
 
     created = []
-    skipped = []
+    updated = []
+    unchanged = []
+    preserved = []
 
     # 1. Create .claude/skills/ directory
     skills_target = os.path.join(target, ".claude", "skills")
     os.makedirs(skills_target, exist_ok=True)
 
-    # 2. Copy skill directories
+    # 2. Managed skill files — update if content differs, skip if identical
     skills_src = os.path.join(src_dir, "src", "skills")
     skill_names = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done"]
 
@@ -39,18 +46,24 @@ def main():
         skill_src_dir = os.path.join(skills_src, skill_name)
         skill_target_dir = os.path.join(skills_target, skill_name)
         skill_file = os.path.join(skill_target_dir, "SKILL.md")
+        src_file = os.path.join(skill_src_dir, "SKILL.md")
+        label = f".claude/skills/{skill_name}/SKILL.md"
 
-        if os.path.exists(skill_file):
-            skipped.append(f".claude/skills/{skill_name}/SKILL.md")
+        os.makedirs(skill_target_dir, exist_ok=True)
+
+        if not os.path.exists(skill_file):
+            shutil.copy2(src_file, skill_file)
+            created.append(label)
         else:
-            os.makedirs(skill_target_dir, exist_ok=True)
-            shutil.copy2(
-                os.path.join(skill_src_dir, "SKILL.md"),
-                skill_file,
-            )
-            created.append(f".claude/skills/{skill_name}/SKILL.md")
+            src_content = read_file(src_file)
+            dst_content = read_file(skill_file)
+            if src_content != dst_content:
+                shutil.copy2(src_file, skill_file)
+                updated.append(label)
+            else:
+                unchanged.append(label)
 
-    # 3. Copy template files (never overwrite)
+    # 3. User data files — never overwrite
     templates_src = os.path.join(src_dir, "src", "templates")
     template_files = [
         "PROJECT_CONTEXT.md",
@@ -62,43 +75,57 @@ def main():
     for filename in template_files:
         target_path = os.path.join(target, filename)
         if os.path.exists(target_path):
-            skipped.append(filename)
+            preserved.append(filename)
         else:
             shutil.copy2(os.path.join(templates_src, filename), target_path)
             created.append(filename)
 
-    # 4. Create features/ directory
+    # 4. Create features/ directory (user data — never overwrite)
     features_dir = os.path.join(target, "features")
     if not os.path.isdir(features_dir):
         os.makedirs(features_dir)
         created.append("features/")
     else:
-        skipped.append("features/")
+        preserved.append("features/")
 
-    # 5. Create .claude/active_feature (empty)
+    # 5. Create .claude/active_feature (user data — never overwrite)
     active_feature_path = os.path.join(target, ".claude", "active_feature")
     if not os.path.exists(active_feature_path):
         with open(active_feature_path, "w") as f:
             f.write("")
         created.append(".claude/active_feature")
     else:
-        skipped.append(".claude/active_feature")
+        preserved.append(".claude/active_feature")
 
     # Report
-    print("Created:")
     if created:
+        print("Created:")
         for item in created:
             print(f"  + {item}")
-    else:
-        print("  (nothing new — everything already exists)")
-
-    if skipped:
         print()
-        print("Skipped (already exist):")
-        for item in skipped:
-            print(f"  - {item}")
 
-    print()
+    if updated:
+        print("Updated (skills refreshed):")
+        for item in updated:
+            print(f"  ~ {item}")
+        print()
+
+    if unchanged:
+        print("Unchanged (skills already up to date):")
+        for item in unchanged:
+            print(f"  = {item}")
+        print()
+
+    if preserved:
+        print("Preserved (your data, not touched):")
+        for item in preserved:
+            print(f"  - {item}")
+        print()
+
+    if not any([created, updated]):
+        print("  (nothing to do — skills up to date, user data preserved)")
+        print()
+
     print("VibeCode OS installed.")
     print('Start with "/vibe-resume" to set up your project,')
     print('or "/vibe-start" to begin your first feature.')

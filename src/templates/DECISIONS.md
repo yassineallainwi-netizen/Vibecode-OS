@@ -1,13 +1,10 @@
 # Decisions Log
 
-Record important decisions here so future sessions understand why things were built a certain way.
-
----
+Decisions that affect future work. Logged automatically by `/vibe-done`.
 
 ## Decision 001
-- Date: [date]
-- Status: Accepted
-- Context: [What question or tradeoff came up?]
-- Decision: [What was decided]
-- Why: [Reasoning]
-- Tradeoff: [What was given up]
+- Date: [TODO: date]
+- Context: [TODO: context]
+- Decision: [TODO: decision]
+- Why: [TODO: why]
+- Tradeoff: [TODO: tradeoff]

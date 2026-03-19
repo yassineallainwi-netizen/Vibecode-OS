@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf \"C:/Users/pc/Documents/VibeCoderCompagnion/features/FEATURE-002-workflow-polish\")",
+      "Bash(mkdir -p \"C:/Users/pc/Documents/VibeCoderCompagnion/features/FEATURE-002-skill-ux-polish\")",
+      "Bash(mkdir -p \"C:/Users/pc/Documents/VibeCoderCompagnion/features/FEATURE-003-recovery-rules\")",
+      "Bash(mkdir -p \"C:/Users/pc/Documents/VibeCoderCompagnion/features/FEATURE-004-docs-and-qa\")",
+      "Bash(mkdir -p \"C:/Users/pc/Documents/VibeCoderCompagnion/features/FEATURE-005-automated-smoke-tests\")",
+      "Bash(mkdir -p \"C:/Users/pc/Documents/VibeCoderCompagnion/tests/smoke\")",
+      "Bash(python tests/smoke/run_smoke_tests.py --verbose)",
+      "Bash(python tests/smoke/run_smoke_tests.py --scenario managed_skill_updates)",
+      "Bash(python tests/smoke/run_smoke_tests.py --keep-temp)",
+      "Bash(python tests/smoke/run_smoke_tests.py --strict-cli)",
+      "Bash(python tests/smoke/run_smoke_tests.py --scenario installer_first_run)",
+      "Bash(python app.py done 1)",
+      "Bash(python app.py list)",
+      "Bash(python app.py delete 1)",
+      "Bash(python app.py add \"Finish report\" --priority low)",
+      "Bash(python app.py list --status pending)",
+      "Bash(python -m unittest discover tests/ -v)",
+      "Bash(python app.py add --help)"
+    ]
+  }
+}
