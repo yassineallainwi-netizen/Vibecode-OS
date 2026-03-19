@@ -1,13 +1,13 @@
-# My Project
+# Project Context
 
 ## What is this?
-[One paragraph describing your project]
+[TODO: One paragraph describing your project and what problem it solves]
 
 ## What's it built with?
-[List your tech stack: Next.js, Python, Supabase, etc.]
+[TODO: List your tech stack — e.g. Next.js, Python, Supabase, etc.]
 
 ## What's the current state?
-[What works now? What's broken? What's next?]
+[TODO: What works now? What's broken? What's next?]
 
 ## Important rules
-[Anything Claude should always remember: "never touch the billing code", "always use Tailwind", etc.]
+[TODO: Anything Claude should always remember — e.g. "never touch the billing code", "always use Tailwind"]

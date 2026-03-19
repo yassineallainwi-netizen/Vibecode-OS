@@ -1,13 +1,11 @@
 # Decisions Log
 
-Record important decisions here so future sessions understand why things were built a certain way.
-
----
+Log decisions here so future sessions understand why things were built a certain way.
 
 ## Decision 001
-- Date: [date]
-- Status: Accepted
-- Context: [What question or tradeoff came up?]
-- Decision: [What was decided]
-- Why: [Reasoning]
-- Tradeoff: [What was given up]
+- Date: [TODO: date]
+- Status: [TODO: Accepted / Rejected / Superseded]
+- Context: [TODO: What question or tradeoff came up?]
+- Decision: [TODO: What was decided]
+- Why: [TODO: Reasoning]
+- Tradeoff: [TODO: What was given up]
