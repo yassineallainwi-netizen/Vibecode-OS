@@ -45,6 +45,24 @@ Always report in this exact structure:
 >
 > **Next step:** [one concrete action]
 
+### Criteria visibility rule
+When the feature has explicit acceptance criteria in SPEC.md:
+- Show which criteria appear complete (supported by VERIFY.md evidence or file changes)
+- Show which criteria are unchecked (no work done yet)
+- Show which criteria are unverified (work may have been done but no explicit evidence)
+
+### Default-to-unverified rule
+If completion of a criterion cannot be confidently inferred from explicit file changes, VERIFY.md entries, or direct user evidence, mark the criterion as **unverified**, not complete. Use this format:
+> - [?] [criterion — unverified, no explicit evidence]
+
+Do not assume criteria are satisfied based on conversational guessing. Require filesystem or user-stated evidence.
+
+### Concision rule
+- Do not dump the full spec
+- Do not create giant tables for small features
+- Do not over-explain uncertainty
+- Keep the report compact and actionable
+
 ### 2b. No active feature
 Scan `features/` using the feature scan rule above.
 

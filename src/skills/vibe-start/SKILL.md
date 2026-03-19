@@ -34,21 +34,88 @@ Read `.claude/active_feature`.
 
 **If it's empty or missing:** continue normally.
 
-### 2. Understand the feature
-If the user's request is clear enough to draft a spec, go to step 3.
+### 2. Classify: trivial or normal?
+
+**A feature may be trivial only if ALL of these are true:**
+- Narrow, clearly bounded change
+- Low-risk scope
+- Limited to one small area
+- No architectural clarification needed
+- No substantial acceptance-criteria decomposition needed
+
+**Hard blocker:** If the feature naturally requires more than one checklist item to verify, it is not trivial.
+
+**Negative filters — a feature is NEVER trivial if ANY of these apply:**
+- Creating multiple new files
+- Adding a new dependency
+- Changing storage format or schema
+- Changing core architecture
+- Changing public CLI surface substantially
+- Modifying multiple subsystems
+- Security-sensitive work (auth, secrets, permissions)
+- Database or persistence redesign
+- Migration logic
+- Non-obvious bug investigation
+- Ambiguous requirements
+- Broad refactors
+
+Short wording alone does not make a feature trivial.
+
+**Examples of likely trivial work:**
+- Typo fix
+- One-line text update
+- Tiny docs correction
+- Narrow UI wording change
+- Single obvious bug fix in one file with low scope
+
+**When uncertain:** do not fast-path. Ask 1 focused clarifying question instead.
+
+### 3A. Trivial fast path
+
+If the request is safely classified as trivial:
+
+1. **Do not ask clarifying questions** unless absolutely necessary.
+2. **Determine the feature number:** Scan `features/` for directories matching `FEATURE-NNN-slug`. Use the next number. If none exist, start at 001. Derive a short slug (lowercase, hyphens, max 4 words).
+3. **Write SPEC.md immediately** using this parse-compatible format:
+
+```markdown
+# Feature: [Name]
+
+## Goal
+[One sentence]
+
+## Scope
+[What will change — keep it brief]
+
+## Acceptance Criteria
+- [ ] [Single clear condition]
+```
+
+4. **Set `.claude/active_feature`** to the new feature ID.
+5. **Do NOT pause for spec approval.** Return control with:
+> "Spec written. Implement it and run `/vibe-done` when finished."
+
+### 3B. Normal path
+
+If the request is non-trivial:
+
+**Understand the feature.** If the user's request is clear enough to draft a spec, go to step 4.
 
 If not, ask at most 2 focused questions — pick the most important gaps:
 - What should the user be able to do when this is built?
 - What should it NOT do or touch?
 
-Do not ask all questions at once if the description already answers some.
+**Assumption-based questions:** When asking a clarifying question, include a recommended default assumption based on project context. Example:
+> "I'll assume local JSON storage. Reply 'y' to confirm, or tell me a different choice."
 
-### 3. Determine the feature number
+The user should be able to confirm with a very short reply. Do not ask all questions at once if the description already answers some.
+
+### 4. Determine the feature number (normal path)
 Scan `features/` for directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Use the next number. If none exist, start at 001.
 
 Derive a short slug from the user's description (lowercase, hyphens, max 4 words).
 
-### 4. Draft the SPEC.md
+### 5. Draft the SPEC.md (normal path)
 Create `features/FEATURE-NNN-slug/SPEC.md`:
 
 ```markdown
@@ -63,7 +130,7 @@ Create `features/FEATURE-NNN-slug/SPEC.md`:
 ## What it should NOT do
 - [Scope boundary]
 
-## How to verify it works
+## Acceptance Criteria
 - [ ] [Plain-language acceptance test]
 
 ## Risks and edge cases
@@ -72,10 +139,10 @@ Create `features/FEATURE-NNN-slug/SPEC.md`:
 
 Fill every section with real content from the conversation. No placeholders.
 
-### 5. Set the active feature
+### 6. Set the active feature (normal path)
 Write the feature ID (e.g. `FEATURE-003-auth-login`) to `.claude/active_feature`.
 
-### 6. Confirm with the user
+### 7. Confirm with the user (normal path)
 Show the spec and ask:
 > "Does this look right? Edit anything you want, or say 'go' to lock it."
 
@@ -89,3 +156,7 @@ Once confirmed, say:
 - Never show an empty template.
 - Keep specs concise — one page for simple features.
 - Ask at most 2 questions at a time.
+- Never skip feature tracking — even trivial features get a SPEC.md and active_feature set.
+- Never skip creating SPEC.md.
+- Never skip setting `.claude/active_feature`.
+- Do not misclassify large or ambiguous work as trivial.

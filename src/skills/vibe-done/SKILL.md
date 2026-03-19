@@ -7,7 +7,7 @@ allowed-tools: Read, Write, Glob, Edit
 
 # /vibe-done — Finish and Verify a Feature
 
-You are closing out a feature. Walk through verification conversationally, write the record, and classify the result honestly.
+You are closing out a feature. Collect evidence, verify against acceptance criteria, classify honestly, and write a concise record.
 
 ## Feature scan rule
 When scanning `features/`, only consider directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories and files.
@@ -31,74 +31,136 @@ If the folder has no `SPEC.md`:
 > Reply **Delete and reset** to clear this state (clears `.claude/active_feature` only — no files are deleted), or write a spec manually.
 Stop here and wait for user reply.
 
-**If `VERIFY.md` already exists:** read it before doing anything else. Ask the user if they want to update it.
+**If `VERIFY.md` already exists:** read it before doing anything else. This is the current verification state — it will be overwritten (not appended) if verification proceeds.
 
-### 2. Ask about verification
+### 2. Zero-diff short-circuit
+If available evidence shows no relevant file changes since the feature started and no concrete work was described by the user, stop early:
+> ⚠️ VibeCode Recovery: No relevant file changes detected.
+
+Classify as `Not Ready to Close`. Do not spend tokens parsing criteria if there is no evidence of work. Docs-only or unrelated changes do not count as feature implementation evidence.
+
+### 3. Collect evidence
 Ask conversationally — not as a checklist:
 > "What's been built and tested? Walk me through it."
 
 If the user's answer is vague or only covers some criteria, ask one focused follow-up. Do not re-ask about criteria they already addressed.
 
-### 3. Classify the work
+### Evidence inspection rule
+Inspect evidence with bounded scope, in this order:
+1. The active feature's `SPEC.md`
+2. Existing `VERIFY.md` if present
+3. Files the user explicitly says were changed
+4. Obviously relevant files in the feature area if needed for confirmation
 
-**Meaningful implementation evidence** means at least one of:
-- The user describes specific completed work
-- Relevant project files were changed
-- Verification notes or completed checklist items exist
+Do not perform a heavy repo-wide scan. If evidence is still unclear, ask the user to state which files were changed, then evaluate.
 
-Classification:
-- **Not Ready to Close** — no meaningful implementation evidence exists. Never classify as Partial or Complete based on vague intent like "I think it's mostly done."
-- **Partially Complete** — meaningful implementation evidence exists, but acceptance criteria are incomplete.
-- **Complete** — meaningful implementation evidence exists and spec criteria are substantially satisfied.
+### 4. Classify the work
+
+**Meaningful implementation evidence** must be tied to filesystem reality or explicit concrete claims. Valid evidence includes at least one of:
+- Changed project files observed by Claude
+- Newly created files relevant to the feature
+- Updated files relevant to the feature
+- Explicit user statement of which files changed
+- Verification notes tied to specific acceptance criteria
+- Completed checklist items supported by the work
+
+**Invalid evidence** includes:
+- Vague statements like "I think it's done"
+- Generic confidence without changed files or verification
+- Purely aspirational claims
+- "Should be fine"
+
+**Classification states — exactly one of:**
+
+- **Not Ready to Close** — no meaningful implementation evidence exists, or the user says work has not started. Feature remains active.
+- **Partially Complete** — meaningful implementation evidence exists, but acceptance criteria are incomplete or unverified. Feature remains active.
+- **Complete** — meaningful implementation evidence exists, spec criteria are substantially satisfied, and explicit verification of what was tested or checked exists. No major unverified core criteria remain.
 
 Default to **Partially Complete** when evidence exists but you are uncertain about completeness.
 
-### 4. Write VERIFY.md
-If `VERIFY.md` doesn't exist, create it automatically from SPEC.md criteria — do not ask first.
+### Acceptance criteria enforcement
+When `SPEC.md` contains acceptance criteria:
+- Explicitly compare reported work against each criterion
+- Warn if major criteria remain unchecked or unverified
+- Do not classify as `Complete` when core criteria are still unverified
 
-Create or update `features/<feature-id>/VERIFY.md`:
+### 5. Write VERIFY.md (live snapshot)
+`VERIFY.md` is a live snapshot of the current verification state.
+
+**Overwrite rule:** On repeated `/vibe-done` runs for the same feature, overwrite the existing `VERIFY.md` entirely. Do not append duplicate verification blocks. Keep one current view.
+
+Create or overwrite `features/<feature-id>/VERIFY.md`:
 
 ```markdown
 # Verification: [Feature Name]
 
 ## What was built
-[Summary from the conversation]
+[Concise summary from the conversation]
 
 ## Acceptance criteria
 - [x] [Criterion] — [how verified]
 - [ ] [Criterion] — not done
 
-## Tests and checks
-- [What was tested, how, and the result]
-
-## Known limitations
+## Known gaps
 - [Anything incomplete or needing follow-up, or "None"]
 
 ## Status
 [Complete / Partially Complete / Not Ready to Close]
 ```
 
-### 5. Update SESSION_LOG.md
+### 6. Passive decision capture
+After writing VERIFY.md, check: did the completed work introduce a meaningful decision?
+
+**Meaningful decisions** include:
+- Architecture choice
+- Storage or data model choice
+- CLI structure choice
+- Dependency choice
+- Error-handling pattern
+- Significant simplification or tradeoff
+
+**Do NOT log:**
+- Variable names, wording tweaks, tiny formatting choices
+- Obvious implementation details with no future consequence
+- Trivial features should almost never generate decisions
+
+**If no meaningful decision exists:** do nothing. Do not write to `DECISIONS.md`.
+
+**If a meaningful decision exists:** append a short entry to `DECISIONS.md`:
+
+```markdown
+## Decision NNN
+- Date: [today]
+- Feature: [feature ID]
+- Decision: [what was chosen]
+- Why: [one sentence]
+- Tradeoff: [what was given up, or "None"]
+```
+
+**First-entry cleanup rule:** If `DECISIONS.md` is still in blank template state (contains only `[TODO:` markers), remove all placeholder content and replace with the first real entry. Do not mix real decisions with blank-state markers.
+
+Number decisions sequentially from the last existing entry. If no entries exist, start at 001.
+
+### 7. Update SESSION_LOG.md (compressed)
 SESSION_LOG.md keeps entries newest-first. SESSION_ARCHIVE.md keeps entries oldest-first.
 
-**Write the new entry at the top of the `## Latest Session` section:**
+**Write the new entry at the top of the log, below the `# Session Log` heading:**
 
 ```markdown
 ## Session [date]
-- Date: [today's date]
-- Feature: [feature ID]
-- What happened: [what was built]
-- What was tested: [summary of verification]
-- Still open: [unchecked criteria, or "Nothing — feature complete"]
-- Next step: [what to do next]
+- [what changed — max 15 words]
+- [what remains open — max 15 words, or "Nothing — complete"]
+- [next step — max 15 words]
 ```
+
+**Strict limits:** Maximum 3 bullets. Maximum 15 words per bullet. No narrative paragraphs. Prioritize signal over completeness.
 
 **Rollover — if SESSION_LOG.md now has more than 10 `## Session` headings:**
 1. Remove the oldest entries from the bottom until only 10 remain
 2. Append those removed entries to the end of `SESSION_ARCHIVE.md` (create the file if it doesn't exist)
 3. Preserve chronological order — oldest entries go to the bottom of the archive
 
-### 6. Report and act on classification
+### 8. Report and act on classification
 
 **Complete:**
 > "Feature complete. VERIFY.md written."
@@ -121,10 +183,19 @@ If the user says move on: clear `.claude/active_feature`. Otherwise leave it act
 
 Do NOT clear `.claude/active_feature`.
 
+### Force-close escape hatch
+If the user explicitly says **"Force Close"**, **"Drop remaining"**, or equivalent, `/vibe-done` may close the feature despite unchecked criteria. In that case:
+- Write `VERIFY.md` with a `## Dropped Scope` section listing all unmet criteria
+- The closeout must clearly indicate the feature was closed with dropped scope, not fully verified
+- Clear `.claude/active_feature`
+- Session log entry must note scope was dropped
+
+This prevents users from getting trapped in an enforcement loop without corrupting the meaning of "complete."
+
 ## Rules
 - You write everything. The user speaks in plain language.
 - Never present a form or checklist for the user to fill in.
 - Be honest. If something wasn't tested, mark it unchecked.
-- Only clear `.claude/active_feature` on Complete or explicit user request to move on.
+- Only clear `.claude/active_feature` on Complete, Force Close, or explicit user request to move on.
 - End every response with exactly one next step.
 - Delete and reset clears `.claude/active_feature` only — it does not delete feature folders or files.
