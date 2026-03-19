@@ -51,26 +51,28 @@ Read `SESSION_LOG.md`. Note the most recent session entry if one exists. If it's
 Read `DECISIONS.md`. Note any decisions that are not blank placeholders. If blank, say so explicitly (e.g., "I still see `[TODO:]` markers in `DECISIONS.md`, so no real decisions are logged yet.").
 
 ### 4. Find the active feature
-Read `.claude/active_feature`.
 
-**If the file is missing or empty:**
-Scan `features/` for directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories or files.
+**First: always Glob `features/FEATURE-*` to scan for valid feature directories** (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). This is the ground-truth scan. Ignore all other directories or files. Record all matches.
+
+Then read `.claude/active_feature`.
+
+**If `.claude/active_feature` contains a feature ID:**
+- If that folder exists in your ground-truth scan → read and report its SPEC.md
+- If that folder does NOT exist → ⚠️ VibeCode Recovery: the reference is broken. Clear `.claude/active_feature` and fall through to use the ground-truth scan below.
+
+**If `.claude/active_feature` is missing or empty (or just cleared above):**
+Use your ground-truth scan:
 - 0 valid folders → "No features have been started yet. Use `/vibe-start` to begin one."
 - 1 valid folder → "Found `FEATURE-NNN-slug`. Resume it, or start a new feature with `/vibe-start`?"
 - 2+ valid folders → suggest the highest-numbered, list up to 2 others, ask which to resume.
 
-**If the file contains a feature ID but that folder does not exist:**
-> ⚠️ VibeCode Recovery: Active feature reference is broken — `FEATURE-NNN-slug` doesn't exist.
-
-Write an empty string to `.claude/active_feature` (this is the only allowed write). Then fall through to the scan logic above.
-
-**If the feature folder exists but has no `SPEC.md`:**
+**If the identified feature has no `SPEC.md`:**
 > ⚠️ VibeCode Recovery: Feature `FEATURE-NNN-slug` exists but has no SPEC.md — it's malformed.
 > Reply **Delete and reset** to clear the active feature reference (clears `.claude/active_feature` only — no files are deleted), or write a spec manually.
 
-Stop here and wait for the user's reply. If they reply "Delete and reset", write an empty string to `.claude/active_feature`. That is the only write allowed.
+Stop here and wait for the user's reply. If they reply "Delete and reset", write an empty string to `.claude/active_feature`. That is the only write allowed. Then continue to Step 5.
 
-**If the feature folder exists and has a `SPEC.md`:** read it.
+**If the identified feature has a `SPEC.md`:** read it and proceed to Step 5.
 
 ### 5. Present the summary
 Summarize only what is directly supported by the files you read. Do not invent details.
