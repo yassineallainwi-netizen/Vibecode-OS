@@ -1,4 +1,4 @@
-# VibeCode OS
+# VibeCode OS  v1.0.0
 
 A structured feature-by-feature workflow for solo vibe coders using Claude Code.
 
