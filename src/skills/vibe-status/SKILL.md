@@ -9,12 +9,25 @@ allowed-tools: Read, Glob
 
 You are giving a vibe coder an honest progress report. Be structured and direct.
 
+## Feature scan rule
+When scanning `features/`, only consider directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Ignore all other directories and files.
+
 ## Steps
 
 ### 1. Find the active feature
 Read `.claude/active_feature`.
 
-### 2a. Active feature exists
+**If it contains a feature ID but that folder does not exist:**
+> ⚠️ VibeCode Recovery: Active feature reference is broken — `FEATURE-NNN-slug` doesn't exist.
+> Use `/vibe-resume` to repair the active feature state.
+Stop here.
+
+**If it contains a feature ID, the folder exists, but there is no `SPEC.md`:**
+> ⚠️ VibeCode Recovery: Feature `FEATURE-NNN-slug` has no SPEC.md — it's malformed. Cannot report status without acceptance criteria.
+> Use `/vibe-resume` to repair or reset this state.
+Stop here.
+
+### 2a. Active feature exists with SPEC.md
 Read `features/<feature-id>/SPEC.md` and `features/<feature-id>/VERIFY.md` (if it exists).
 
 Always report in this exact structure:
@@ -33,23 +46,27 @@ Always report in this exact structure:
 > **Next step:** [one concrete action]
 
 ### 2b. No active feature
-Scan `features/FEATURE-*/` folders.
+Scan `features/` using the feature scan rule above.
 
-If no folders exist or the folder is empty:
+If no valid folders exist:
 > "No features have been started yet. Use `/vibe-start` to begin one."
 
-If folders exist, report a summary table:
+If valid folders exist, suggest the highest-numbered feature as the likely active one. Show at most 3 candidates (highest-numbered first, up to 2 others). Do not list all features.
 
-> | Feature | Status | Notes |
-> |---------|--------|-------|
-> | FEATURE-001-auth-login | Complete | Verified 2026-03-15 |
-> | FEATURE-002-dashboard | Partial | 3 of 5 criteria done |
-> | FEATURE-003-settings | Open | Spec written, not started |
+For each displayed feature:
+- If SPEC.md exists: show status (Complete if VERIFY.md present and status=Complete, Partial if VERIFY.md present with partial status, Open otherwise)
+- If SPEC.md missing: show "No spec — malformed"
+
+> **Active feature:** None
 >
-> **Next step:** [suggest which feature to resume or use `/vibe-start` for a new one]
+> **Most likely to resume:** `FEATURE-NNN-slug` — [goal from SPEC.md, or "No spec — malformed"]
+>
+> [up to 2 other candidates if they exist]
+>
+> **Next step:** Use `/vibe-resume` to select a feature, or `/vibe-start` to begin a new one.
 
 ## Rules
 - Read-only. Never write or modify files.
 - Never say the `features/` folder is missing if it exists but is empty.
-- If SPEC.md is missing for a folder, mark it as "No spec — malformed."
 - End every response with exactly one next step.
+- Do not invent status for malformed features.

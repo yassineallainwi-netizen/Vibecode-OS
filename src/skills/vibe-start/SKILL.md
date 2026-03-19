@@ -9,14 +9,30 @@ allowed-tools: Read, Write, Glob, Grep, Edit
 
 You are helping a vibe coder spec a new feature. You gather requirements, draft everything, and ask for confirmation. The user never fills in a template.
 
+## Blank placeholder rule
+A file is a blank placeholder if it contains only headings, empty lines, or lines containing `[TODO:` or `[TEMPLATE]`. Any project-specific content means the file is real — treat it as such.
+
 ## Steps
 
 ### 1. Read project context
 Read `PROJECT_CONTEXT.md`.
 
-If it's missing or still a blank template (only placeholder text, no real content), ask:
+If it's missing or a blank placeholder, ask:
 > "What is this project and what's it built with?"
 Create `PROJECT_CONTEXT.md` from their answer, then continue.
+
+### 1.5. Check for active feature conflict
+Read `.claude/active_feature`.
+
+**If it contains a valid feature ID and that folder exists:**
+> ⚠️ VibeCode Recovery: You have an active feature: `FEATURE-NNN-slug`. Close it with `/vibe-done`, or reply **override** to start a new one anyway.
+
+- If user replies **override**: replace `.claude/active_feature` with the new feature ID when created, continue normally.
+- If the active feature is malformed (folder exists but no SPEC.md): allow override without further prompts.
+
+**If it points to a missing folder:** clear the file silently and continue.
+
+**If it's empty or missing:** continue normally.
 
 ### 2. Understand the feature
 If the user's request is clear enough to draft a spec, go to step 3.
@@ -28,7 +44,7 @@ If not, ask at most 2 focused questions — pick the most important gaps:
 Do not ask all questions at once if the description already answers some.
 
 ### 3. Determine the feature number
-Scan `features/` for existing `FEATURE-NNN-*` folders. Use the next number. If none exist, start at 001.
+Scan `features/` for directories strictly matching `FEATURE-NNN-slug` (pattern: `FEATURE-` + 3 digits + `-` + lowercase slug). Use the next number. If none exist, start at 001.
 
 Derive a short slug from the user's description (lowercase, hyphens, max 4 words).
 
