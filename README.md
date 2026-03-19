@@ -90,6 +90,8 @@ Use this to verify a fresh VibeCode OS installation works correctly:
 
 The smoke suite validates installer integrity and file layout — not interactive Claude skill behavior.
 
+Runs automatically on push and pull requests via GitHub Actions.
+
 **Prerequisites:** Python 3.8+. Claude CLI is optional.
 
 ```bash
