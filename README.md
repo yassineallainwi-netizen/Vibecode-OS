@@ -86,10 +86,31 @@ Use this to verify a fresh VibeCode OS installation works correctly:
 - [ ] Break `.claude/active_feature` (write a fake ID) — confirm recovery message appears
 - [ ] Create multiple feature folders with no active feature — confirm Claude asks which one to resume
 
+## Automated Smoke Tests
+
+The smoke suite validates installer integrity and file layout — not interactive Claude skill behavior.
+
+**Prerequisites:** Python 3.8+. Claude CLI is optional.
+
+```bash
+# Run all scenarios
+python tests/smoke/run_smoke_tests.py
+
+# Run one scenario
+python tests/smoke/run_smoke_tests.py --scenario template_markers
+
+# Debug a failure
+python tests/smoke/run_smoke_tests.py --keep-temp --verbose
+```
+
+Covers: installer first run, idempotency, managed skill updates, template marker integrity.
+
+Interactive skill behavior still requires manual QA — see the checklist above.
+
 ## Limitations
 
 - **Prompt-based skills:** Claude may occasionally deviate from instructions.
 - **Project-local installation:** Skills are injected into your repo, not installed globally as a packaged Claude plugin.
-- **Manual QA only:** No automated test suites are included yet.
+- **Structural tests only:** Automated smoke tests cover the installer and file integrity. Interactive skill behavior still requires manual QA.
 - **Single-developer focus:** Designed for solo builders, not multi-player team environments.
 - **Log capping:** The active session log is capped at 10 entries. Older sessions roll over to SESSION_ARCHIVE.md.
