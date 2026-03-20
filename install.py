@@ -106,6 +106,22 @@ def main():
     else:
         preserved.append(".claude/approved_commands.json")
 
+    # 7. Create .claude/context/ directory (compact artifacts — created at runtime by skills)
+    context_dir = os.path.join(target, ".claude", "context")
+    if not os.path.isdir(context_dir):
+        os.makedirs(context_dir)
+        created.append(".claude/context/")
+    else:
+        preserved.append(".claude/context/")
+
+    # 8. Create .claude/runtime/ directory (local runtime data — capability cache, etc.)
+    runtime_dir = os.path.join(target, ".claude", "runtime")
+    if not os.path.isdir(runtime_dir):
+        os.makedirs(runtime_dir)
+        created.append(".claude/runtime/")
+    else:
+        preserved.append(".claude/runtime/")
+
     # Report
     if created:
         print("Created:")

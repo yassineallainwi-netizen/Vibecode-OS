@@ -50,6 +50,32 @@ Auto-trigger mini-resume (skip to Step 5, emit compact War Room) when ANY of the
 
 Mini-resume omits steps 1-4 and goes directly to Step 5 with whatever can be determined from files.
 
+## Compact artifact check (run before Step 1)
+
+Before reading any markdown files, check for compact artifacts in `.claude/context/`:
+
+**Read `.claude/context/project_state.json`** (if it exists):
+- Parse JSON; validate `schema_version == 1` and all required fields present
+- Compute checksum: SHA-256 of content excluding `checksum` field; compare to stored `checksum`
+- Check freshness: parse `last_compacted` ISO-8601 UTC; if older than 24h → stale
+- If valid AND fresh: set `context_source = "compact_ready"`
+- If missing, corrupt, checksum mismatch, schema mismatch, or stale: set `context_source = "full_scan_required"`
+
+**If context_source = compact_ready**, also read `feature_FEATURE-NNN.json` (use `last_completed_feature` or `active_feature` from project_state):
+- Same validation (schema, checksum, freshness)
+- If feature artifact invalid or stale: set `context_source = "mixed"`
+
+**Context source definitions:**
+- `compact_ready` — both artifacts valid and fresh; prefer over full file scan
+- `mixed` — project state valid but feature artifact missing or stale; supplement with targeted file reads
+- `full_scan_required` — artifacts missing, corrupt, or stale; run full steps 1-4 as normal
+
+**Dead-man's switch:** if artifact age > 24h, always fall back to `full_scan_required` regardless of checksum validity.
+
+**Reconstruction note:** when falling back, set `reconstruction_reason` to one of: "artifacts_missing", "artifacts_stale", "checksum_mismatch", "schema_mismatch".
+
+---
+
 ## Steps
 
 ### 1. Read project context
@@ -148,8 +174,14 @@ Score 0-2 = newbie mode. Score 3+ = expert mode.
 > **Context pointer:** [first unchecked criterion in active SPEC.md, or last context pointer from SESSION_LOG.md, or "None"]
 >
 > **Verification:** [readiness: ready/degraded/none] | [strength: high/medium/low/none] | [last command or "none"] | [freshness: fresh/reused/stale/missing] | [blocking failure or "None"] | [safest next action]
+>
+> **Context source:** [compact_ready / mixed / full_scan_required] [— reconstruction reason if applicable]
 
 *(Verification line: read VERIFY.md audit trail for last command/timestamp; compute freshness from audit trail timestamp vs now; strength from evidence labels on checked criteria; readiness = ready if strength ≥ medium, degraded if low, none if no VERIFY.md. Fail closed — omit this line entirely if VERIFY.md is unreadable.)*
+*(Context source line: set during compact artifact check above. For compact_ready, fields sourced from JSON artifacts are labeled "(from cache)". For full_scan_required, note reconstruction reason. For mixed, note which source each field came from.)*
+
+**Auto mini-resume on lost state:** if `context_source = full_scan_required` AND `reconstruction_reason` is "artifacts_stale" or "checksum_mismatch", prepend to the manifest:
+> ⚠️ **Stale context detected** — running full reconstruction. [reconstruction_reason].
 
 **Novice-only fields** (add only when maturity score is 0-2):
 >

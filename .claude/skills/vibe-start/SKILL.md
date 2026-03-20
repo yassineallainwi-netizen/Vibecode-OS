@@ -107,30 +107,34 @@ Read `.claude/active_feature`.
 
 **If it's empty or missing:** continue normally.
 
-### 2. Classify: trivial or normal?
+### 2. Classify complexity
 
-**A feature may be trivial only if ALL of these are true:**
-- Narrow, clearly bounded change
-- Low-risk scope
-- Limited to one small area
-- No architectural clarification needed
-- No substantial acceptance-criteria decomposition needed
+Assign exactly one complexity label. Use this in the SPEC.md and mode header.
 
-**Hard blocker:** If the feature naturally requires more than one checklist item to verify, it is not trivial.
+**`trivial`** — ALL of these must be true:
+- Narrow, clearly bounded change; low-risk; limited to one small area
+- No architectural clarification needed; no substantial acceptance-criteria decomposition needed
+- Naturally only one checklist item to verify
 
-**Negative filters — a feature is NEVER trivial if ANY of these apply:**
-- Creating multiple new files
-- Adding a new dependency
-- Changing storage format or schema
-- Changing core architecture
-- Changing public CLI surface substantially
-- Modifying multiple subsystems
-- Security-sensitive work (auth, secrets, permissions)
+**`normal`** — typical feature work; a few acceptance criteria; doesn't trigger complex/high-risk
+
+**`complex`** — ANY of these apply:
+- Touches 3+ subsystems or files across multiple directories
+- New dependency added
+- Storage format or schema change
+- Non-obvious investigation needed
+- Ambiguous requirements requiring clarification
+- Broad refactor spanning existing code
+
+**`high-risk`** — ANY of these apply:
+- Security-sensitive work (auth, secrets, permissions, sandboxing)
 - Database or persistence redesign
 - Migration logic
-- Non-obvious bug investigation
-- Ambiguous requirements
-- Broad refactors
+- Changing public CLI surface substantially
+- Changing core architecture
+- Requires coordinated rollback strategy
+
+**Negative filters — a feature is NEVER trivial if ANY of these apply:** creating multiple new files, adding a new dependency, changing storage format or schema, changing core architecture, changing public CLI surface substantially, modifying multiple subsystems, security-sensitive work, database redesign, migration logic, non-obvious bug investigation, ambiguous requirements, broad refactors.
 
 Short wording alone does not make a feature trivial. When uncertain: do not fast-path. Ask 1 focused clarifying question instead.
 
@@ -146,6 +150,9 @@ If safely classified as trivial:
 
 ```markdown
 # Feature: [Name]
+
+## Complexity
+trivial
 
 ## Goal
 [One sentence]
@@ -185,6 +192,9 @@ Create `features/FEATURE-NNN-slug/SPEC.md`:
 
 ```markdown
 # Feature: [Name]
+
+## Complexity
+[trivial / normal / complex / high-risk]
 
 ## Goal
 [One sentence: what the user can do after this is built]

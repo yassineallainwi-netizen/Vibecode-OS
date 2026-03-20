@@ -3,6 +3,13 @@
 ---
 
 ## Session 2026-03-20
+- FEATURE-009 complete: compact artifacts, dead-man's switch, Context source field, 5 new smoke tests
+- Nothing open — all 12 acceptance criteria pass; 20/20 smoke tests green
+- Context pointer: read features/FEATURE-010-hardened-plugin-delivery/SPEC.md to continue
+
+---
+
+## Session 2026-03-20
 - FEATURE-008 complete: evidence model, command approval, VERIFY.md audit trail, verification War Room line, 5 new smoke tests
 - Nothing open — all 15 acceptance criteria pass; 15/15 smoke tests green
 - Context pointer: read features/FEATURE-009-hardened-token-optimization/SPEC.md to continue

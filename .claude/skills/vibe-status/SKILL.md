@@ -2,7 +2,7 @@
 name: vibe-status
 description: Check the current status of the active feature or all features. Use when the user wants a progress report.
 disable-model-invocation: true
-allowed-tools: Read, Glob
+allowed-tools: Read, Glob, Bash
 ---
 
 # /vibe-status — Check Feature Progress
@@ -55,15 +55,31 @@ Read `features/<feature-id>/SPEC.md` and `features/<feature-id>/VERIFY.md` (if i
 - `none`: no VERIFY.md exists or no criteria checked
 - Fail closed (omit field) when parsing is ambiguous
 
+**Determine Context pack** from `.claude/context/project_state.json` (if it exists):
+- Read and validate JSON: check `schema_version == 1`, required fields present, checksum match
+- Parse `last_compacted` timestamp; if older than 24h → `full_scan_required`
+- If valid + fresh → `compact_ready`
+- If project state OK but `feature_FEATURE-NNN.json` missing or stale → `mixed`
+- If any failure → `full_scan_required`
+
+**Determine Verification summary** from VERIFY.md audit trail (if present):
+- Freshness: `fresh` if last audit entry timestamp < 24h ago; `stale` if >24h; `missing` if no audit trail; `reused` if label was "reused" in last entry
+
 Always report in this exact structure:
 
 > **Feature goal:** [one-sentence goal from SPEC.md]
 >
 > **Mode:** [building / verifying / closing]
 >
+> **Complexity:** [trivial / normal / complex / high-risk — from `## Complexity` in SPEC.md, or "not set"]
+>
 > **Risk flags:** [grounded flags, or "None"]
 >
 > **Verification strength:** [high / medium / low / none]
+>
+> **Verification summary:** [fresh / reused / stale / missing]
+>
+> **Context pack:** [compact_ready / mixed / full_scan_required]
 >
 > **Completed:**
 > - [x] [criterion — evidence label: how verified, or "built but not tested"]

@@ -61,3 +61,12 @@
 - Why: Matches Claude Code's current recommended format. Each skill is self-contained and independently maintainable. The `vibe-` prefix avoids collisions with built-in commands now and in the future.
 - Tradeoff: 4 skill directories instead of 1 file. Some instruction duplication across skills since each is self-contained. Acceptable — independence and correctness outweigh DRY concerns for skill files.
 - Consequence: install.py copies 4 directories instead of 1 file. YAML frontmatter is used in SKILL.md files (Claude Code's required format) while all user-facing files remain plain markdown per Decision 001.
+
+---
+
+## Decision 007
+- Date: 2026-03-20
+- Feature: FEATURE-009-hardened-token-optimization
+- Decision: Skills write compact JSON artifacts directly using Write/Edit tools, without spawning Python subprocesses for runtime operations
+- Why: Subprocess calls add latency and failure surface in Claude Code environments where subprocess execution may not always be available; skills can write JSON inline
+- Tradeoff: JSON schema validation and atomic writes are still handled by helper scripts (compaction.py, context.py) when called explicitly; skill-level writes may lack checksum — triggers reconstruction on resume, which is safe

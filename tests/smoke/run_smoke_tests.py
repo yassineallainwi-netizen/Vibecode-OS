@@ -438,6 +438,110 @@ def downgrade_on_zero_tests(config):
         raise AssertionError(f"Cannot import verification helper: {e}")
 
 
+# ---------- FEATURE-009 scenarios ----------
+
+
+def context_directory_created(config):
+    """Verify .claude/context/ directory is created on first install."""
+    tmp, _ = _do_first_install(config)
+    try:
+        assert_dir_exists(tmp / ".claude" / "context")
+        return True, ".claude/context/ directory created on install"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
+def context_directory_preserved(config):
+    """Verify .claude/context/ is preserved (not removed) on second install."""
+    tmp, _ = _do_first_install(config)
+    try:
+        context_dir = tmp / ".claude" / "context"
+        assert_dir_exists(context_dir)
+        # Write a file inside to confirm it is not cleared
+        sentinel = context_dir / "sentinel.txt"
+        write_file(sentinel, "user data\n")
+
+        result = run_installer(config.install_script, tmp)
+        assert_returncode(result)
+
+        if not sentinel.exists():
+            raise AssertionError(".claude/context/ was cleared on second install — sentinel file removed")
+        return True, ".claude/context/ preserved on second install"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
+def runtime_directory_created(config):
+    """Verify .claude/runtime/ directory is created on first install."""
+    tmp, _ = _do_first_install(config)
+    try:
+        assert_dir_exists(tmp / ".claude" / "runtime")
+        return True, ".claude/runtime/ directory created on install"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
+def schema_version_present(config):
+    """Verify compaction.py write_project_state produces schema_version field."""
+    import sys as _sys
+    import json as _json
+    import tempfile
+    helpers_path = REPO_ROOT / "src" / "helpers"
+    _sys.path.insert(0, str(helpers_path))
+    try:
+        from compaction import write_project_state, read_project_state
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / ".claude" / "context").mkdir(parents=True)
+            data = {
+                "project": "test",
+                "active_feature": "",
+                "workflow_mode": "idle",
+                "risk_flags": [],
+                "verification_readiness": "none",
+                "last_completed_feature": "FEATURE-009-test",
+                "recent_files": [],
+                "command_registry": {},
+            }
+            write_project_state(str(root), data)
+            artifact = read_project_state(str(root))
+            if artifact is None:
+                raise AssertionError("read_project_state returned None after write")
+            if artifact.get("schema_version") != 1:
+                raise AssertionError(f"schema_version missing or wrong: {artifact.get('schema_version')!r}")
+        return True, "write_project_state produces valid artifact with schema_version=1"
+    except ImportError as e:
+        raise AssertionError(f"Cannot import compaction helper: {e}")
+
+
+def atomic_write_safety(config):
+    """Verify atomic_write in context.py writes cleanly and does not leave temp files."""
+    import sys as _sys
+    import tempfile
+    helpers_path = REPO_ROOT / "src" / "helpers"
+    _sys.path.insert(0, str(helpers_path))
+    try:
+        from context import atomic_write
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "test_output.json"
+            atomic_write(str(target), '{"ok": true}\n')
+            if not target.exists():
+                raise AssertionError("atomic_write did not create the target file")
+            content = target.read_text(encoding="utf-8")
+            if '"ok": true' not in content:
+                raise AssertionError(f"atomic_write output corrupted: {content!r}")
+            # Verify no temp files left behind
+            temp_files = list(Path(tmpdir).glob("*.tmp"))
+            if temp_files:
+                raise AssertionError(f"atomic_write left temp files: {temp_files}")
+        return True, "atomic_write creates file cleanly with no leftover temp files"
+    except ImportError as e:
+        raise AssertionError(f"Cannot import context helper: {e}")
+
+
 # ---------- Scenario registry ----------
 # (function, required)
 
@@ -456,6 +560,11 @@ SCENARIOS = {
     "command_validation_rejects_metacharacters": (command_validation_rejects_metacharacters, True),
     "ansi_stripping": (ansi_stripping, True),
     "downgrade_on_zero_tests": (downgrade_on_zero_tests, True),
+    "context_directory_created": (context_directory_created, True),
+    "context_directory_preserved": (context_directory_preserved, True),
+    "runtime_directory_created": (runtime_directory_created, True),
+    "schema_version_present": (schema_version_present, True),
+    "atomic_write_safety": (atomic_write_safety, True),
     "claude_probe": (claude_probe, False),
 }
 

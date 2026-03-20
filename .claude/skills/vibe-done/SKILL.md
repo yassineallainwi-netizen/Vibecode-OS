@@ -273,6 +273,60 @@ If git is unavailable or not a git repo: skip silently.
 **First feature only:** if SESSION_LOG.md had no prior `## Session` entries before the one just written:
 > If your project doesn't have a README.md yet, consider adding one — even a single paragraph helps future you.
 
+### 7.8. Auto-compaction (Complete or Partially Complete only)
+After writing SESSION_LOG.md, automatically compact project state to `.claude/context/`.
+
+**Skills manage JSON directly** — write the artifact using the Write tool without invoking Python subprocesses.
+
+**Write `.claude/context/project_state.json`:**
+```json
+{
+  "schema_version": 1,
+  "generator_version": "009",
+  "project": "[name from PROJECT_CONTEXT.md]",
+  "active_feature": "",
+  "workflow_mode": "idle",
+  "risk_flags": ["[any risk flags from this session]"],
+  "verification_readiness": "[high/medium/low/none from VERIFY.md]",
+  "last_completed_feature": "[this feature ID]",
+  "recent_files": ["[top changed files from this session]"],
+  "command_registry": {"[key]": "[value from AGENTS.md command registry]"},
+  "last_compacted": "[current ISO-8601 UTC timestamp]",
+  "created_at": "[ISO-8601]",
+  "updated_at": "[ISO-8601]",
+  "derived_from": "vibe-done",
+  "checksum": ""
+}
+```
+
+**Write `.claude/context/feature_FEATURE-NNN.json`:**
+```json
+{
+  "schema_version": 1,
+  "generator_version": "009",
+  "feature_id": "[FEATURE-NNN-slug]",
+  "title": "[literal spec title]",
+  "status": "[complete/partial/not-ready]",
+  "changed_files": ["[files changed this session]"],
+  "unresolved_items": ["[open criteria or empty]"],
+  "contextual_pointer": "[context pointer from session log]",
+  "evidence_grade": "[high/medium/low/none]",
+  "commands_used": ["[verification commands run]"],
+  "verification_summary": {"tests_run": null, "tests_failed": null},
+  "active_risks": ["[any open risks]"],
+  "complexity": "[trivial/normal/complex/high-risk from SPEC.md]",
+  "checkpoint_id": "[sha256 prefix of active HEAD or 'no-git']",
+  "created_at": "[ISO-8601]",
+  "updated_at": "[ISO-8601]",
+  "derived_from": "vibe-done"
+}
+```
+
+**Rules:**
+- Checksum field: compute SHA-256 of the artifact content excluding the checksum field itself (use `src/helpers/compaction.py` if available, or leave checksum as empty string — a missing checksum triggers reconstruction on resume, which is safe)
+- Fail safely: if compaction write fails for any reason, log a warning in the closing report and do not block closure
+- For Not Ready to Close: skip compaction (feature is still active)
+
 ### 8. Report and act on classification
 
 **Complete:**
