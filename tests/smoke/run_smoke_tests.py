@@ -322,6 +322,122 @@ def installer_creates_required_dirs(config):
             cleanup_temp_repo(tmp)
 
 
+# ---------- FEATURE-008 scenarios ----------
+
+
+def approved_commands_created(config):
+    """Verify .claude/approved_commands.json is created on first install with valid JSON."""
+    import json as _json
+    tmp, _ = _do_first_install(config)
+    try:
+        path = tmp / ".claude" / "approved_commands.json"
+        assert_exists(path)
+        content = read_file(path)
+        data = _json.loads(content)
+        if "schema_version" not in data:
+            raise AssertionError("approved_commands.json missing schema_version")
+        if "commands" not in data:
+            raise AssertionError("approved_commands.json missing commands array")
+        if not isinstance(data["commands"], list):
+            raise AssertionError("commands must be an array")
+        assert_created_report(normalize(
+            __import__("subprocess").run(
+                [__import__("sys").executable, str(config.install_script)],
+                cwd=str(create_temp_repo()),
+                capture_output=True,
+                timeout=30,
+            ).stdout.decode("utf-8", errors="replace")
+        ), ".claude/approved_commands.json")
+        return True, "approved_commands.json created with valid schema"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
+def approved_commands_preserved(config):
+    """Verify .claude/approved_commands.json is NOT overwritten on second install."""
+    import json as _json
+    tmp, _ = _do_first_install(config)
+    try:
+        path = tmp / ".claude" / "approved_commands.json"
+        # Modify the file to simulate user data
+        custom = {"schema_version": 1, "commands": [{"cmd": "pytest", "cmd_hash": "abc123", "repo_id": "test"}], "checksum": "custom"}
+        write_file(path, _json.dumps(custom, indent=2))
+        snapshot = read_file(path)
+
+        # Run installer again
+        result = run_installer(config.install_script, tmp)
+        assert_returncode(result)
+        output = normalize(result.stdout)
+
+        # Must be preserved, not overwritten
+        assert_file_unchanged(path, snapshot)
+        assert_preserved_report(output, ".claude/approved_commands.json")
+        return True, "approved_commands.json preserved on second install"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
+def command_validation_rejects_metacharacters(config):
+    """Verify the validation helper rejects shell metacharacters."""
+    import sys as _sys
+    helpers_path = REPO_ROOT / "src" / "helpers"
+    _sys.path.insert(0, str(helpers_path))
+    try:
+        from verification import validate_command
+        dangerous = ["npm test | rm -rf /", "pytest; echo pwned", "$(malicious)", "cmd > /dev/null", "sudo pytest"]
+        for cmd in dangerous:
+            valid, reason = validate_command(cmd)
+            if valid:
+                raise AssertionError(f"Should have rejected: {cmd!r} — reason: {reason}")
+        # Valid commands should pass
+        valid_cmds = ["pytest", "npm test", "flutter test", "cargo test", "make test"]
+        for cmd in valid_cmds:
+            valid, reason = validate_command(cmd)
+            if not valid:
+                raise AssertionError(f"Should have accepted: {cmd!r} — reason: {reason}")
+        return True, "Dangerous commands rejected, trusted commands accepted"
+    except ImportError as e:
+        raise AssertionError(f"Cannot import verification helper: {e}")
+
+
+def ansi_stripping(config):
+    """Verify strip_ansi removes escape sequences without corrupting text."""
+    import sys as _sys
+    helpers_path = REPO_ROOT / "src" / "helpers"
+    _sys.path.insert(0, str(helpers_path))
+    try:
+        from verification import strip_ansi
+        raw = "\x1b[31mFAILED\x1b[0m test_foo.py::test_bar\n\x1b[32m5 passed\x1b[0m"
+        cleaned = strip_ansi(raw)
+        if "\x1b" in cleaned:
+            raise AssertionError(f"ANSI escape sequences not removed: {cleaned!r}")
+        if "FAILED" not in cleaned or "5 passed" not in cleaned:
+            raise AssertionError(f"Text content corrupted: {cleaned!r}")
+        return True, "ANSI stripping removes escapes, preserves text content"
+    except ImportError as e:
+        raise AssertionError(f"Cannot import verification helper: {e}")
+
+
+def downgrade_on_zero_tests(config):
+    """Verify classify_evidence downgrades when 0 tests detected."""
+    import sys as _sys
+    helpers_path = REPO_ROOT / "src" / "helpers"
+    _sys.path.insert(0, str(helpers_path))
+    try:
+        from verification import triage_log, classify_evidence
+        # Output that looks like success but has 0 tests
+        output = "============================= 0 passed =============================="
+        triage = triage_log(output)
+        label = classify_evidence(0, output, triage)
+        if label == "command_verified":
+            raise AssertionError(f"Should have downgraded 0-test output, got: {label!r}")
+        return True, f"0-test output correctly downgraded to: {label!r}"
+    except ImportError as e:
+        raise AssertionError(f"Cannot import verification helper: {e}")
+
+
 # ---------- Scenario registry ----------
 # (function, required)
 
@@ -335,6 +451,11 @@ SCENARIOS = {
     "session_log_context_pointer": (session_log_context_pointer, True),
     "active_feature_sanitized": (active_feature_sanitized, True),
     "installer_creates_required_dirs": (installer_creates_required_dirs, True),
+    "approved_commands_created": (approved_commands_created, True),
+    "approved_commands_preserved": (approved_commands_preserved, True),
+    "command_validation_rejects_metacharacters": (command_validation_rejects_metacharacters, True),
+    "ansi_stripping": (ansi_stripping, True),
+    "downgrade_on_zero_tests": (downgrade_on_zero_tests, True),
     "claude_probe": (claude_probe, False),
 }
 

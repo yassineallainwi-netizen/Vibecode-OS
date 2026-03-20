@@ -207,6 +207,23 @@ Fill every section from the conversation. No placeholders.
 ### 6. Set the active feature (normal path)
 Write the sanitized feature ID (e.g. `FEATURE-003-auth-login`) to `.claude/active_feature`.
 
+### 6.5. Propose verification commands (normal path — complex/high-risk features only)
+Using findings from the tech-stack scan (step 1.3), propose verification commands if the feature is complex or high-risk AND the command registry in AGENTS.md has no declared `verify_cmd`.
+
+**Propose only from repo evidence:**
+- `package.json` has `scripts.test` → propose the exact script value (e.g. `npm test`)
+- `pytest.ini` or `[tool.pytest]` in `pyproject.toml` exists → propose `pytest`
+- `Makefile` has a `test` target → propose `make test`
+- Flutter project (`pubspec.yaml` + `lib/`) → propose `flutter test`
+- Cargo project → propose `cargo test`
+- Go project → propose `go test ./...`
+
+**Rules:**
+- Prefer exact declared commands over ecosystem defaults
+- Leave unsupported fields blank (never invent commands)
+- Surface as advisory note only: "Consider adding to AGENTS.md: `verify_cmd: [proposed]`"
+- Do not prompt or block — this is a suggestion, not a question
+
 ### 7. Surface mode and risk flags (normal path)
 Before confirming the spec, show a compact header using repo maturity data from step 1.3:
 

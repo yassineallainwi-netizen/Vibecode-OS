@@ -47,6 +47,14 @@ Read `features/<feature-id>/SPEC.md` and `features/<feature-id>/VERIFY.md` (if i
 - "Unspecced changes" — if user explicitly mentions working on files outside what SPEC.md describes
 - "Stale session" — SESSION_LOG latest entry date is significantly older than today
 
+**Determine Verification strength** from VERIFY.md (if it exists):
+- Count criteria with `command_verified` or `repo_observed` labels vs total checked criteria
+- `high`: majority are command_verified or repo_observed
+- `medium`: majority are user_reported, some command_verified
+- `low`: all are user_reported or spec_expected
+- `none`: no VERIFY.md exists or no criteria checked
+- Fail closed (omit field) when parsing is ambiguous
+
 Always report in this exact structure:
 
 > **Feature goal:** [one-sentence goal from SPEC.md]
@@ -55,8 +63,10 @@ Always report in this exact structure:
 >
 > **Risk flags:** [grounded flags, or "None"]
 >
+> **Verification strength:** [high / medium / low / none]
+>
 > **Completed:**
-> - [x] [criterion — how verified, or "built but not tested"]
+> - [x] [criterion — evidence label: how verified, or "built but not tested"]
 >
 > **Missing:**
 > - [ ] [criterion not yet built]

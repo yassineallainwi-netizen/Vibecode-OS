@@ -97,6 +97,15 @@ def main():
     else:
         preserved.append(".claude/active_feature")
 
+    # 6. Create .claude/approved_commands.json (user data — never overwrite)
+    approved_commands_path = os.path.join(target, ".claude", "approved_commands.json")
+    if not os.path.exists(approved_commands_path):
+        with open(approved_commands_path, "w", encoding="utf-8") as f:
+            f.write('{"schema_version": 1, "commands": [], "checksum": ""}\n')
+        created.append(".claude/approved_commands.json")
+    else:
+        preserved.append(".claude/approved_commands.json")
+
     # Report
     if created:
         print("Created:")

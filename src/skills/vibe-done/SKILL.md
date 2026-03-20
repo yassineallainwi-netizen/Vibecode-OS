@@ -15,6 +15,42 @@ You are closing out a feature. Collect evidence, verify against acceptance crite
 - Never execute git commands — only draft suggestions
 - Prefix unsupported quantitative claims with `[USER_REPORTED]` in VERIFY.md
 
+## Evidence model
+Every acceptance criterion must carry exactly one evidence label:
+- `command_verified` — a command was run and exited 0 with meaningful output
+- `repo_observed` — Claude inspected files directly and observed the criterion is met
+- `user_reported` — user stated it; not independently verified
+- `spec_expected` — spec says so but no evidence exists yet
+
+**Ordered strength (weakest → strongest):** none → weak (spec_expected) → partial (user_reported) → strong (repo_observed) → fresh_strong (command_verified)
+
+**Downgrade from command_verified when:**
+- Exit code is non-zero
+- Output is empty (and silent success is not explicitly expected for this tool)
+- Output shows 0 tests run
+- Output contains binary data or hostile formatting
+- Output was truncated before trustworthy interpretation
+
+**Display mapping:** command_verified/repo_observed → high; user_reported → medium; spec_expected → low
+
+## Command approval rule
+Before running a verification command, check `.claude/approved_commands.json`:
+- If command is approved for this repo (matching cmd_hash + repo_id): run without prompting
+- If not found, or hash differs, or file missing/corrupt: ask the user once:
+  > "I'd like to run `[command]` to verify. **Approve** (run now + remember), **approve-all** (remember all future commands), or **skip** (mark as user_reported)?"
+- On Approve: add to approved_commands.json (call `python src/helpers/approval.py` or apply logic inline)
+- On Skip: do not run; mark evidence as `user_reported`
+
+## Command execution safety
+When running a verification command:
+- **Block:** `|`, `&`, `;`, `$()`, backticks, `>`, `<`, `sudo`, `su`, absolute executable paths
+- **Allow:** trusted PATH-resolved tools (python, node, npm, pytest, flutter, cargo, go, make, jest, etc.)
+- Set Bash timeout to 30 seconds
+- Cap output at 50KB (truncate if exceeded; set `truncated: true` in evidence)
+- Strip ANSI escape sequences from output before evaluating (call `src/helpers/verification.py strip_ansi` or apply inline)
+- If output appears binary: skip and label `user_reported`
+- Non-zero exit code → never classify as `command_verified`
+
 ## Feature scan rule
 Glob `**/SPEC.md`, filter to `features/FEATURE-NNN-slug/SPEC.md`. Ignore SPEC.md files outside this pattern.
 A feature "has no VERIFY.md" if no `features/FEATURE-NNN-slug/VERIFY.md` exists — check with Glob `**/VERIFY.md`.
@@ -69,17 +105,25 @@ When the user claims specific quantitative evidence (e.g., "94 tests pass"):
 - If not verifiable: note as `[USER_REPORTED]` in VERIFY.md
 - If contradicts observable evidence: flag discrepancy before writing VERIFY.md
 
-### 3.5. Verification command safety
-If running a verification command:
-- Check the command against the allowlist:
-  - **Block:** `|`, `&`, `;`, `$()`, backticks, `>`, `<`, `sudo`, `su`, explicit absolute paths to executables outside project-local dirs
-  - **Allow:** trusted PATH-resolved tools: python, node, npm, pytest, flutter, cargo, go, make, gradle, mvn, jest, mocha, rspec
-- Run in the project root directory, with only trusted env vars (PATH, PWD, HOME)
-- Set Bash timeout to 30 seconds
-- Capture at most 50KB of output
-- Strip ANSI escape sequences from output before evaluating
-- If output appears to be binary: skip and label `[USER_REPORTED]`
-- Non-zero exit code: never classify the criterion as verified
+### 3.5. Verification command execution
+If running a verification command, follow Command execution safety rules above.
+
+After execution:
+1. Strip ANSI from output
+2. Triage output: extract test counts, failing files, error classes (call `src/helpers/verification.py triage_log` or apply inline pattern matching)
+3. Classify evidence: use `classify_evidence(exit_code, output, triage)` logic
+4. Compute output SHA-256 for audit trail: `compute_output_hash(stripped_output)`
+
+**Mini verification-resume trigger:** if any of these occur:
+- Same command fails 2+ times across repeated /vibe-done runs (detected via audit trail in existing VERIFY.md)
+- Repeated downgraded success (exit 0 but 0 tests, twice)
+- Evidence classification thrash (oscillating between labels for same criterion)
+
+When triggered, emit before the classification step:
+> ⚠️ **Verification mini-resume:**
+> - Last command: `[cmd]` — exit code [N], [X] tests run
+> - Evidence: [label] (reason for downgrade if applicable)
+> - Safest next action: [fix failing test / add tests / verify manually]
 
 ### 4. Classify the work
 
@@ -106,7 +150,7 @@ Default to **Partially Complete** when evidence exists but completeness is uncer
 - Do not classify as `Complete` when core criteria are still unverified
 
 ### 5. Write VERIFY.md (live snapshot)
-`VERIFY.md` is a live snapshot. On repeated `/vibe-done` runs, **overwrite entirely** — do not append.
+`VERIFY.md` is a live snapshot. On repeated `/vibe-done` runs, **overwrite entirely** — do not append. Preserve any `## Manual notes` section if it exists in the existing VERIFY.md.
 
 Create or overwrite `features/<feature-id>/VERIFY.md`:
 
@@ -117,15 +161,32 @@ Create or overwrite `features/<feature-id>/VERIFY.md`:
 [Concise summary from the conversation]
 
 ## Acceptance criteria
-- [x] [Criterion] — [how verified]
+- [x] [Criterion] — command_verified: [how verified / command run]
+- [x] [Criterion] — repo_observed: [what was inspected]
+- [x] [Criterion] — user_reported: [USER_REPORTED] [what user stated]
 - [ ] [Criterion] — not done
 
 ## Known gaps
 - [Anything incomplete or needing follow-up, or "None"]
 
+## Verification summary
+[X/Y criteria verified] | Evidence strength: [high/medium/low/none] | Touched files: [list or "not tracked"]
+
 ## Status
 [Complete / Partially Complete / Not Ready to Close]
+
+<!-- audit_trail
+| criterion | label | command | exit_code | timestamp | output_sha256 |
+|-----------|-------|---------|-----------|-----------|--------------|
+| [criterion text truncated to 40 chars] | [label] | [command] | [0/-1] | [ISO-8601] | [sha256 prefix...] |
+-->
 ```
+
+**Audit trail rules:**
+- Add one row per command-verified criterion
+- Preserve rows from existing VERIFY.md audit trail (do not discard old entries)
+- SHA-256 is computed from ANSI-stripped output
+- Timestamps are ISO-8601 UTC
 
 ### 6. Passive decision capture
 After writing VERIFY.md, check: did completed work introduce a meaningful decision?
@@ -193,12 +254,13 @@ Read the literal SPEC.md title (first `# Feature:` heading). Derive the commit s
 - Subject template: `feat: FEATURE-NNN-slug literal-spec-title-truncated`
 - Keep total subject under 72 characters — truncate title portion only
 
-Present the Git Ghost block:
+Present the Git Ghost block (v2 — includes verification summary):
 
 > **Git Ghost — copy and run this yourself (VibeCode never executes git):**
 > ```
 > git add -A && git commit -m "feat: FEATURE-NNN-slug [truncated literal title]"
 > ```
+> Verification: [X/Y command_verified] | Evidence strength: [high/medium/low]
 > [If on a feature branch matching this feature:]
 > This branch can now be merged to master.
 > [If dirty working tree:]

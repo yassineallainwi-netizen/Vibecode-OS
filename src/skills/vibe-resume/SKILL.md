@@ -146,6 +146,10 @@ Score 0-2 = newbie mode. Score 3+ = expert mode.
 > **Next concrete code action:** [one literal action derived from first unchecked criterion, or "Start with `/vibe-start`"]
 >
 > **Context pointer:** [first unchecked criterion in active SPEC.md, or last context pointer from SESSION_LOG.md, or "None"]
+>
+> **Verification:** [readiness: ready/degraded/none] | [strength: high/medium/low/none] | [last command or "none"] | [freshness: fresh/reused/stale/missing] | [blocking failure or "None"] | [safest next action]
+
+*(Verification line: read VERIFY.md audit trail for last command/timestamp; compute freshness from audit trail timestamp vs now; strength from evidence labels on checked criteria; readiness = ready if strength ≥ medium, degraded if low, none if no VERIFY.md. Fail closed — omit this line entirely if VERIFY.md is unreadable.)*
 
 **Novice-only fields** (add only when maturity score is 0-2):
 >
