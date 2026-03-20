@@ -12,6 +12,12 @@ You are helping a vibe coder spec a new feature. You gather requirements, draft 
 ## Blank placeholder rule
 A file is a blank placeholder if it contains only headings, empty lines, or lines containing `[TODO:` or `[TEMPLATE]`. Any project-specific content means the file is real — treat it as such.
 
+## AGENTS.md blank detection rule
+AGENTS.md is considered "uncustomized" if its `## Project-specific rules` section contains only `[TODO:]` markers, even if the generic sections (Mission, Working Rules, Required Reading) have content. The generic sections are installed by default — they do not count as project-specific customization.
+
+## Next-step reconciliation
+If `SESSION_LOG.md` contains a "Suggested next" from a previous `/vibe-done` that differs from the user's current feature request, proceed with the user's actual request without warning. The suggestion was advisory, not a commitment.
+
 ## Steps
 
 ### 1. Read project context
@@ -21,7 +27,19 @@ If it's missing or a blank placeholder, ask:
 > "What is this project and what's it built with?"
 Create `PROJECT_CONTEXT.md` from their answer, then continue.
 
-### 1.5. Check for active feature conflict
+### 1.5. Check AGENTS.md (first feature only)
+Read `AGENTS.md` in the **project root directory**.
+
+Glob `**/SPEC.md` and filter to `features/FEATURE-NNN-slug/SPEC.md`. If **zero** existing features are found AND AGENTS.md is missing or uncustomized (see AGENTS.md blank detection rule):
+> "Quick setup: `AGENTS.md` has placeholder rules. Want to add any project-specific rules now?
+> For example: tech constraints, off-limits areas, code style, or testing expectations.
+> Reply with your rules, or say **skip** to fill it later."
+
+If the user provides rules, update the `## Project-specific rules` subsections in AGENTS.md, replacing `[TODO:]` markers with their input. If they say **skip**, continue silently.
+
+On subsequent features (existing SPEC.md files found): skip this step entirely.
+
+### 1.7. Check for active feature conflict
 Read the file `.claude/active_feature`.
 
 **If it contains a valid feature ID and that folder exists:**

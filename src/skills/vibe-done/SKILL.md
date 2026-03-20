@@ -2,7 +2,7 @@
 name: vibe-done
 description: Finish a feature with verification. Use when the user thinks a feature is complete.
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Edit
+allowed-tools: Read, Write, Glob, Edit, Bash
 ---
 
 # /vibe-done — Finish and Verify a Feature
@@ -23,6 +23,10 @@ Clear `.claude/active_feature`, then scan `features/` for valid folders without 
 
 **If empty or missing:**
 Glob `**/SPEC.md` and apply the feature scan rule to find valid features. Check `**/VERIFY.md` to identify those without a VERIFY.md. If one exists, use it. If multiple exist, ask which one to close. If none, say "Nothing to close. Use `/vibe-start`."
+
+**Feature mismatch check:** If `.claude/active_feature` contains a feature ID but the user is asking to close a DIFFERENT feature, flag it:
+> ⚠️ Mismatch: `.claude/active_feature` says `FEATURE-NNN` but you're asking to close `FEATURE-MMM`. Which feature should I verify?
+Wait for the user's reply before proceeding.
 
 **Once a feature is identified — read its SPEC.md:**
 
@@ -53,6 +57,14 @@ Inspect evidence with bounded scope, in this order:
 4. Obviously relevant files in the feature area if needed for confirmation
 
 Do not perform a heavy repo-wide scan. If evidence is still unclear, ask the user to state which files were changed, then evaluate.
+
+### Cross-check rule
+When the user claims specific quantitative evidence (e.g., "94 tests pass", "flutter analyze clean"):
+- If Bash is available: verify the claim by running the relevant command (e.g., count test files, run analyzer). Bash is allowed for read-only verification commands.
+- If the claim cannot be verified: note it as "user-stated, not independently verified" in VERIFY.md
+- If the claim contradicts observable evidence: flag the discrepancy before writing VERIFY.md
+
+Do not silently accept quantitative claims. A VERIFY.md that says "94 tests green" when the repo has 142 tests is misleading.
 
 ### 4. Classify the work
 
@@ -150,7 +162,7 @@ Update `SESSION_LOG.md` in the **project root**. SESSION_LOG.md keeps entries ne
 ## Session [date]
 - [what changed — max 15 words]
 - [what remains open — max 15 words, or "Nothing — complete"]
-- [next step — max 15 words]
+- Suggested next: [max 15 words — this is advisory, not a commitment]
 ```
 
 **Strict limits:** Maximum 3 bullets. Maximum 15 words per bullet. No narrative paragraphs. Prioritize signal over completeness.
@@ -159,6 +171,26 @@ Update `SESSION_LOG.md` in the **project root**. SESSION_LOG.md keeps entries ne
 1. Remove the oldest entries from the bottom until only 10 remain
 2. Append those removed entries to the end of `SESSION_ARCHIVE.md` (create the file if it doesn't exist)
 3. Preserve chronological order — oldest entries go to the bottom of the archive
+
+### 7.5. Git commit and branch reminder (Complete or Force Close only)
+Skip this step for Partially Complete or Not Ready to Close.
+
+Run `git branch --show-current` via Bash (read-only).
+
+Include in the closing report:
+> **Git reminder:** Consider committing your changes for this feature:
+> `git add -A && git commit -m "feat(FEATURE-NNN-slug): [short description]"`
+
+If on a feature branch matching the completed feature:
+> This branch can now be merged to master.
+
+If on master or a mismatched branch:
+> Consider creating a feature branch for your next feature: `git checkout -b feature/FEATURE-NNN-slug`
+
+If git is not available or the directory is not a git repo: skip the git reminder silently.
+
+**First feature only:** If SESSION_LOG.md had no prior `## Session` entries before the one you just wrote, add:
+> If your project doesn't have a README.md yet, consider adding one — even a single paragraph helps future you.
 
 ### 8. Report and act on classification
 

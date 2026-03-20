@@ -15,4 +15,15 @@ Before any change, read: `PROJECT_CONTEXT.md`, `SESSION_LOG.md` (latest entry), 
 - Stop when uncertain — ask rather than guess
 
 ## Project-specific rules
-[TODO: Add rules for this project — e.g. "always use Tailwind classes", "never modify auth.py directly"]
+
+### Tech constraints
+[TODO: e.g. "Python 3.10+, stdlib only", "Flutter + Dart, no web target"]
+
+### Off-limits areas
+[TODO: e.g. "never modify auth.py directly", "don't change the DB schema without a migration"]
+
+### Code style preferences
+[TODO: e.g. "use single quotes in JS", "keep functions under 30 lines", "French UI labels, English identifiers"]
+
+### Testing expectations
+[TODO: e.g. "run pytest before marking done", "no tests needed for prototyping phase"]

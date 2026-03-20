@@ -2,7 +2,7 @@
 name: vibe-resume
 description: Resume work from a previous session. Use at the start of a new session to restore context.
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob
+allowed-tools: Read, Write, Glob, Bash
 ---
 
 # /vibe-resume — Resume a Previous Session
@@ -10,7 +10,7 @@ allowed-tools: Read, Write, Glob
 You are restoring session context for a vibe coder. Read existing files and summarize what you find. Never invent, draft, or guess project details.
 
 ## Read-only rule
-This command is read-only. The only write you are allowed to perform is clearing `.claude/active_feature` when it contains a broken reference. Never write or modify `PROJECT_CONTEXT.md`, `AGENTS.md`, `DECISIONS.md`, `SESSION_LOG.md`, or any feature file. Never run Bash or git commands.
+This command is read-only. The only write you are allowed to perform is clearing `.claude/active_feature` when it contains a broken reference. Never write or modify `PROJECT_CONTEXT.md`, `AGENTS.md`, `DECISIONS.md`, `SESSION_LOG.md`, or any feature file. Bash is allowed only for read-only git queries (e.g., `git branch --show-current`). Never run destructive git commands.
 
 ## Strict write ban
 You must NEVER write to these files under any circumstance:
@@ -23,6 +23,9 @@ The only allowed write is: clearing an invalid `.claude/active_feature`.
 
 ## Blank placeholder rule
 A file is a blank placeholder if it contains only headings, empty lines, or lines containing `[TODO:` or `[TEMPLATE]`. Any project-specific content means the file is real.
+
+## AGENTS.md blank detection rule
+AGENTS.md is considered "uncustomized" if its `## Project-specific rules` section contains only `[TODO:]` markers, even if the generic sections (Mission, Working Rules, Required Reading) have content. The generic sections are installed by default — they do not count as project-specific customization.
 
 ## Blank-state transparency rule
 When treating a file as blank, you must explain why. Use this pattern:
@@ -43,6 +46,13 @@ If it's missing or a blank placeholder, do not draft content. Explain why you're
 > 3. What's the current state — what works, what's broken, what's next?"
 
 Wait for the user to answer, then continue to step 2 using their answers as context for the summary only. Do not write anything.
+
+### 1.5. Read AGENTS.md
+Read `AGENTS.md` in the **project root directory**.
+
+If it contains project-specific rules (not uncustomized per the AGENTS.md blank detection rule), note them for the summary.
+
+If it is uncustomized or missing, note this for the summary.
 
 ### 2. Read session log
 Read the file `SESSION_LOG.md` in the **project root directory**. Note the most recent session entry if one exists. If it's a blank placeholder, say so explicitly.
@@ -72,7 +82,15 @@ Use your ground-truth scan:
 
 Stop here and wait for the user's reply. If they reply "Delete and reset", write an empty string to `.claude/active_feature`. That is the only write allowed. Then continue to Step 5.
 
-**Once a feature is identified and its SPEC.md is found:** read it and proceed to Step 5.
+**Once a feature is identified and its SPEC.md is found:** read it and proceed to Step 4.5.
+
+### 4.5. Check git branch alignment
+Run `git branch --show-current` via Bash (read-only, no modifications).
+
+If the current git branch name contains a `FEATURE-NNN` pattern that does NOT match the active feature:
+> ⚠️ **Branch mismatch:** You're on branch `feature/FEATURE-NNN-...` but the active feature is `FEATURE-MMM-...`. Consider switching branches or merging before continuing.
+
+If git is not available, the directory is not a git repo, or the branch has no feature pattern: skip silently.
 
 ### 5. Present the summary
 Summarize only what is directly supported by the files you read. Do not invent details.
@@ -80,6 +98,8 @@ Summarize only what is directly supported by the files you read. Do not invent d
 Always use this exact structure:
 
 > **Project:** [name and one-line description from PROJECT_CONTEXT.md, or "Not configured yet"]
+>
+> **Project rules:** [one-line summary from AGENTS.md project-specific rules, or "Not configured — consider adding project-specific rules via `/vibe-start`"]
 >
 > **Current state:** [most recent session summary from SESSION_LOG.md, or "No sessions logged yet"]
 >
@@ -99,6 +119,6 @@ Always use this exact structure:
 ## Rules
 - Summarize only what files contain. Never invent or hallucinate project details.
 - Never write project files. The only allowed write is clearing `.claude/active_feature`.
-- Never run Bash or git commands.
+- Bash is allowed only for read-only git queries (`git branch --show-current`). Never run destructive git commands.
 - Do not use the ⚠️ prefix for normal first-run empty state — only for broken or ambiguous state.
 - End every response with exactly one recommended next step.
