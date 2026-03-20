@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "hooks": [
+    {
+      "name": "post_vibe_done",
+      "description": "Trigger compaction after /vibe-done completes",
+      "trigger": "after_skill",
+      "skill": "vibe-done",
+      "script": "helpers/compaction.py",
+      "args": ["write_project_state"],
+      "on_failure": "warn_and_continue",
+      "notes": "Hooks may only call scripts under .claude-plugin/helpers/ — no external paths allowed"
+    },
+    {
+      "name": "pre_vibe_start",
+      "description": "Validate active_feature state before /vibe-start runs",
+      "trigger": "before_skill",
+      "skill": "vibe-start",
+      "script": "helpers/context.py",
+      "args": ["validate_active_feature"],
+      "on_failure": "warn_and_continue",
+      "notes": "Sanitizes active_feature content; clears if malformed"
+    }
+  ]
+}

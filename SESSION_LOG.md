@@ -3,6 +3,13 @@
 ---
 
 ## Session 2026-03-20
+- FEATURE-010 complete: official plugin format, adapter boundary, 9 parity tests, 24/24 smoke tests
+- Nothing open — all 12 acceptance criteria pass; 24/24 smoke + 9/9 parity tests green
+- Context pointer: project complete through FEATURE-010; ready for v2.0.0 release
+
+---
+
+## Session 2026-03-20
 - FEATURE-009 complete: compact artifacts, dead-man's switch, Context source field, 5 new smoke tests
 - Nothing open — all 12 acceptance criteria pass; 20/20 smoke tests green
 - Context pointer: read features/FEATURE-010-hardened-plugin-delivery/SPEC.md to continue

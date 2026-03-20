@@ -542,6 +542,70 @@ def atomic_write_safety(config):
         raise AssertionError(f"Cannot import context helper: {e}")
 
 
+# ---------- FEATURE-010 scenarios ----------
+
+
+def plugin_manifest_valid(config):
+    """Verify .claude-plugin/plugin.json exists and has required fields."""
+    import json as _json
+    plugin_json = REPO_ROOT / ".claude-plugin" / "plugin.json"
+    assert_exists(plugin_json)
+    try:
+        data = _json.loads(read_file(plugin_json))
+    except Exception as e:
+        raise AssertionError(f"plugin.json is not valid JSON: {e}")
+    required = ["name", "version", "skills", "capabilities_required", "fallback_mode"]
+    missing = [f for f in required if f not in data]
+    if missing:
+        raise AssertionError(f"plugin.json missing fields: {missing}")
+    if data.get("fallback_mode") != "standalone":
+        raise AssertionError(f"fallback_mode must be 'standalone', got: {data.get('fallback_mode')!r}")
+    return True, f"plugin.json valid — {data['name']} v{data['version']}"
+
+
+def plugin_skills_present(config):
+    """Verify all 4 skill files exist under .claude-plugin/skills/."""
+    skill_names = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done"]
+    for skill in skill_names:
+        path = REPO_ROOT / ".claude-plugin" / "skills" / skill / "SKILL.md"
+        assert_exists(path)
+    return True, f"All 4 skill files present under .claude-plugin/skills/"
+
+
+def plugin_helpers_present(config):
+    """Verify all helper scripts present under .claude-plugin/helpers/."""
+    helpers = ["context.py", "claude_md.py", "verification.py", "approval.py", "compaction.py"]
+    missing = []
+    for h in helpers:
+        path = REPO_ROOT / ".claude-plugin" / "helpers" / h
+        if not path.exists():
+            missing.append(h)
+    if missing:
+        raise AssertionError(f"Missing plugin helpers: {missing}")
+    return True, f"All {len(helpers)} helpers present under .claude-plugin/helpers/"
+
+
+def standalone_mode_unchanged(config):
+    """Verify install.py --plugin still installs .claude/skills/ alongside plugin."""
+    tmp = create_temp_repo()
+    try:
+        result = run_command(
+            [__import__("sys").executable, str(config.install_script), "--plugin"],
+            cwd=str(tmp),
+            timeout=30,
+        )
+        assert_returncode(result)
+        # Both standalone and plugin skills must be present
+        skill_names = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done"]
+        for skill in skill_names:
+            assert_exists(tmp / ".claude" / "skills" / skill / "SKILL.md")
+            assert_exists(tmp / ".claude-plugin" / "skills" / skill / "SKILL.md")
+        return True, "Both .claude/skills/ and .claude-plugin/skills/ installed by --plugin"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
 # ---------- Scenario registry ----------
 # (function, required)
 
@@ -565,6 +629,10 @@ SCENARIOS = {
     "runtime_directory_created": (runtime_directory_created, True),
     "schema_version_present": (schema_version_present, True),
     "atomic_write_safety": (atomic_write_safety, True),
+    "plugin_manifest_valid": (plugin_manifest_valid, True),
+    "plugin_skills_present": (plugin_skills_present, True),
+    "plugin_helpers_present": (plugin_helpers_present, True),
+    "standalone_mode_unchanged": (standalone_mode_unchanged, True),
     "claude_probe": (claude_probe, False),
 }
 

@@ -1,0 +1,22 @@
+{
+  "name": "vibecode-os",
+  "version": "2.0.0",
+  "description": "Structured sessions for vibe coders — spec, verify, and ship with confidence",
+  "skills": [
+    "skills/vibe-start",
+    "skills/vibe-resume",
+    "skills/vibe-status",
+    "skills/vibe-done"
+  ],
+  "capabilities_required": [
+    "file_read",
+    "file_write"
+  ],
+  "capabilities_optional": [
+    "command_exec"
+  ],
+  "fallback_mode": "standalone",
+  "min_host_version": "1.0.0",
+  "homepage": "https://github.com/vibecode/vibecode-os",
+  "notes": "When installed as a plugin, skill files in .claude-plugin/skills/ take precedence over .claude/skills/. Standalone .claude/skills/ mode remains fully functional when plugin is absent or disabled. Plugin is not available in remote Claude sessions — standalone mode is the fallback."
+}

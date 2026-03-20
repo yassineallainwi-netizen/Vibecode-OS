@@ -3,8 +3,14 @@
 VibeCode OS Installer
 Copies skills and templates into the current repo.
 Python 3.8+, stdlib only.
+
+Usage:
+    python install.py            # standalone mode (default)
+    python install.py --plugin   # standalone + official plugin
+    python install.py --rollback # remove plugin, keep standalone
 """
 
+import argparse
 import os
 import shutil
 import sys
@@ -15,25 +21,8 @@ def read_file(path):
         return f.read()
 
 
-def main():
-    target = os.getcwd()
-    src_dir = os.path.dirname(os.path.abspath(__file__))
-
-    print("VibeCode OS Installer")
-    print("=" * 40)
-    print(f"Installing into: {target}")
-    print()
-
-    # Warn if not a git repo (don't block)
-    if not os.path.isdir(os.path.join(target, ".git")):
-        print("[Warning] This directory is not a git repo. That's fine, but git is recommended.")
-        print()
-
-    created = []
-    updated = []
-    unchanged = []
-    preserved = []
-
+def install_standalone(target, src_dir, created, updated, unchanged, preserved):
+    """Install standalone .claude/skills/ mode (always runs)."""
     # 1. Create .claude/skills/ directory
     skills_target = os.path.join(target, ".claude", "skills")
     os.makedirs(skills_target, exist_ok=True)
@@ -122,7 +111,155 @@ def main():
     else:
         preserved.append(".claude/runtime/")
 
+
+def install_plugin(target, src_dir, created, updated, unchanged):
+    """Install official Claude Code plugin to .claude-plugin/ (alongside standalone)."""
+    plugin_target = os.path.join(target, ".claude-plugin")
+    plugin_src = os.path.join(src_dir, ".claude-plugin")
+
+    if not os.path.isdir(plugin_src):
+        print("[Warning] .claude-plugin/ source not found — plugin install skipped.")
+        return
+
+    # plugin.json — managed (update if differs)
+    plugin_json_src = os.path.join(plugin_src, "plugin.json")
+    plugin_json_dst = os.path.join(plugin_target, "plugin.json")
+    os.makedirs(plugin_target, exist_ok=True)
+    if not os.path.exists(plugin_json_dst):
+        shutil.copy2(plugin_json_src, plugin_json_dst)
+        created.append(".claude-plugin/plugin.json")
+    else:
+        if read_file(plugin_json_src) != read_file(plugin_json_dst):
+            shutil.copy2(plugin_json_src, plugin_json_dst)
+            updated.append(".claude-plugin/plugin.json")
+        else:
+            unchanged.append(".claude-plugin/plugin.json")
+
+    # skills/ — managed (update if differs), mirror from src/skills/
+    skills_src = os.path.join(src_dir, "src", "skills")
+    skills_plugin_dir = os.path.join(plugin_target, "skills")
+    skill_names = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done"]
+    for skill_name in skill_names:
+        src_file = os.path.join(skills_src, skill_name, "SKILL.md")
+        dst_dir = os.path.join(skills_plugin_dir, skill_name)
+        dst_file = os.path.join(dst_dir, "SKILL.md")
+        label = f".claude-plugin/skills/{skill_name}/SKILL.md"
+        os.makedirs(dst_dir, exist_ok=True)
+        if not os.path.exists(dst_file):
+            shutil.copy2(src_file, dst_file)
+            created.append(label)
+        elif read_file(src_file) != read_file(dst_file):
+            shutil.copy2(src_file, dst_file)
+            updated.append(label)
+        else:
+            unchanged.append(label)
+
+    # helpers/ — managed (update if differs), mirror from src/helpers/
+    helpers_src = os.path.join(src_dir, "src", "helpers")
+    helpers_plugin_dir = os.path.join(plugin_target, "helpers")
+    os.makedirs(helpers_plugin_dir, exist_ok=True)
+    helper_files = ["context.py", "claude_md.py", "verification.py", "approval.py", "compaction.py"]
+    for filename in helper_files:
+        src_file = os.path.join(helpers_src, filename)
+        dst_file = os.path.join(helpers_plugin_dir, filename)
+        label = f".claude-plugin/helpers/{filename}"
+        if not os.path.exists(src_file):
+            continue
+        if not os.path.exists(dst_file):
+            shutil.copy2(src_file, dst_file)
+            created.append(label)
+        elif read_file(src_file) != read_file(dst_file):
+            shutil.copy2(src_file, dst_file)
+            updated.append(label)
+        else:
+            unchanged.append(label)
+
+    # hooks/hooks.json — managed
+    hooks_src = os.path.join(plugin_src, "hooks", "hooks.json")
+    hooks_dir = os.path.join(plugin_target, "hooks")
+    hooks_dst = os.path.join(hooks_dir, "hooks.json")
+    os.makedirs(hooks_dir, exist_ok=True)
+    if os.path.exists(hooks_src):
+        if not os.path.exists(hooks_dst):
+            shutil.copy2(hooks_src, hooks_dst)
+            created.append(".claude-plugin/hooks/hooks.json")
+        elif read_file(hooks_src) != read_file(hooks_dst):
+            shutil.copy2(hooks_src, hooks_dst)
+            updated.append(".claude-plugin/hooks/hooks.json")
+        else:
+            unchanged.append(".claude-plugin/hooks/hooks.json")
+
+
+def rollback_plugin(target, removed):
+    """Remove .claude-plugin/ directory, restoring standalone-only state."""
+    plugin_dir = os.path.join(target, ".claude-plugin")
+    if os.path.isdir(plugin_dir):
+        shutil.rmtree(plugin_dir)
+        removed.append(".claude-plugin/")
+    else:
+        print("  (no .claude-plugin/ to remove — already in standalone mode)")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="VibeCode OS installer",
+        add_help=True,
+    )
+    parser.add_argument(
+        "--plugin",
+        action="store_true",
+        help="Also install official Claude Code plugin to .claude-plugin/ (alongside standalone)",
+    )
+    parser.add_argument(
+        "--rollback",
+        action="store_true",
+        help="Remove .claude-plugin/ and restore standalone-only state",
+    )
+    args = parser.parse_args()
+
+    target = os.getcwd()
+    src_dir = os.path.dirname(os.path.abspath(__file__))
+
+    print("VibeCode OS Installer")
+    print("=" * 40)
+    print(f"Installing into: {target}")
+    if args.plugin:
+        print("Mode: standalone + plugin")
+    elif args.rollback:
+        print("Mode: rollback (remove plugin, keep standalone)")
+    else:
+        print("Mode: standalone")
+    print()
+
+    # Warn if not a git repo (don't block)
+    if not os.path.isdir(os.path.join(target, ".git")):
+        print("[Warning] This directory is not a git repo. That's fine, but git is recommended.")
+        print()
+
+    created = []
+    updated = []
+    unchanged = []
+    preserved = []
+    removed = []
+
+    # Rollback: remove plugin, still install/update standalone
+    if args.rollback:
+        rollback_plugin(target, removed)
+
+    # Always install standalone mode
+    install_standalone(target, src_dir, created, updated, unchanged, preserved)
+
+    # Plugin mode: install alongside standalone
+    if args.plugin and not args.rollback:
+        install_plugin(target, src_dir, created, updated, unchanged)
+
     # Report
+    if removed:
+        print("Removed:")
+        for item in removed:
+            print(f"  - {item}")
+        print()
+
     if created:
         print("Created:")
         for item in created:
@@ -147,13 +284,19 @@ def main():
             print(f"  - {item}")
         print()
 
-    if not any([created, updated]):
+    if not any([created, updated, removed]):
         print("  (nothing to do — skills up to date, user data preserved)")
         print()
 
     print("VibeCode OS installed.")
-    print('Start with "/vibe-resume" to set up your project,')
-    print('or "/vibe-start" to begin your first feature.')
+    if args.rollback:
+        print("Plugin removed. Standalone .claude/skills/ mode is active.")
+    elif args.plugin:
+        print('Plugin installed. Both .claude-plugin/ and .claude/skills/ are active.')
+        print('See docs/plugin_migration.md for coexistence rules.')
+    else:
+        print('Start with "/vibe-resume" to set up your project,')
+        print('or "/vibe-start" to begin your first feature.')
 
 
 if __name__ == "__main__":

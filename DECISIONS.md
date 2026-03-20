@@ -70,3 +70,12 @@
 - Decision: Skills write compact JSON artifacts directly using Write/Edit tools, without spawning Python subprocesses for runtime operations
 - Why: Subprocess calls add latency and failure surface in Claude Code environments where subprocess execution may not always be available; skills can write JSON inline
 - Tradeoff: JSON schema validation and atomic writes are still handled by helper scripts (compaction.py, context.py) when called explicitly; skill-level writes may lack checksum — triggers reconstruction on resume, which is safe
+
+---
+
+## Decision 008
+- Date: 2026-03-20
+- Feature: FEATURE-010-hardened-plugin-delivery
+- Decision: Official Claude Code plugin format (`.claude-plugin/plugin.json`) rather than a custom Python runtime surface
+- Why: Claude Code's official plugin format provides correct skill loading, capability negotiation, and marketplace distribution; a custom Python runtime would duplicate infrastructure and break future platform integration
+- Tradeoff: Plugin not available in remote sessions — standalone `.claude/skills` is the documented fallback, which is fully functional
