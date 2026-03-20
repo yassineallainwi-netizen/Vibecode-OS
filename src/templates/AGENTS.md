@@ -1,3 +1,4 @@
+<!-- vibecode:agents:v2 -->
 # Agent Operating Manual
 
 ## Mission
@@ -5,6 +6,20 @@ Build this project incrementally, one feature at a time, using the VibeCode OS w
 
 ## Required Reading
 Before any change, read: `PROJECT_CONTEXT.md`, `SESSION_LOG.md` (latest entry), and the active feature's `SPEC.md`.
+
+## Workflow Mode
+Commands available in this project:
+- `/vibe-start` — spec and begin a new feature
+- `/vibe-resume` — restore session context (run at the start of every session)
+- `/vibe-status` — check active feature progress
+- `/vibe-done` — verify and close the active feature
+
+## Command Registry
+verify_cmd: [TODO: e.g. "pytest" or "npm test" or "flutter test"]
+test_cmd: [TODO: e.g. "pytest tests/" or "npm run test"]
+lint_cmd: [TODO: e.g. "flake8 src/" or "npm run lint"]
+typecheck_cmd: [TODO: e.g. "mypy src/" or "npx tsc --noEmit"]
+build_cmd: [TODO: e.g. "npm run build" or "flutter build apk"]
 
 ## Working Rules
 - Work one task at a time

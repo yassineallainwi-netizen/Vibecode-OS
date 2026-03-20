@@ -3,6 +3,6 @@
 ## Latest Session
 - [TODO: what changed]
 - [TODO: what's still open]
-- [TODO: suggested next step]
+- Context pointer: [TODO: what to read/do first next session]
 
-Maximum 3 bullets per session. Third bullet is a suggestion, not a commitment. Older entries auto-roll to SESSION_ARCHIVE.md after 10 sessions.
+Maximum 3 bullets per session. Third bullet is a contextual pointer, not a prediction. Older entries auto-roll to SESSION_ARCHIVE.md after 10 sessions.

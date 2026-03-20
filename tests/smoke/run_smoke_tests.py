@@ -252,6 +252,76 @@ def claude_probe(config):
         return None, f"Claude CLI probe failed: {e}"
 
 
+# ---------- FEATURE-007 scenarios ----------
+
+
+def agents_version_marker(config):
+    """Verify AGENTS.md template contains the vibecode:agents:v2 version marker."""
+    agents_path = config.src_dir / "templates" / "AGENTS.md"
+    assert_exists(agents_path)
+    content = read_file(agents_path)
+    marker = "<!-- vibecode:agents:v2 -->"
+    if marker not in content:
+        raise AssertionError(
+            f"AGENTS.md template missing version marker: {marker!r}\n"
+            f"  path: {agents_path}"
+        )
+    return True, f"AGENTS.md template contains version marker"
+
+
+def agents_command_registry(config):
+    """Verify AGENTS.md template contains all 5 command registry keys."""
+    agents_path = config.src_dir / "templates" / "AGENTS.md"
+    assert_exists(agents_path)
+    content = read_file(agents_path)
+    required_keys = ["verify_cmd:", "test_cmd:", "lint_cmd:", "typecheck_cmd:", "build_cmd:"]
+    missing = [k for k in required_keys if k not in content]
+    if missing:
+        raise AssertionError(
+            f"AGENTS.md template missing command registry keys: {missing}\n"
+            f"  path: {agents_path}"
+        )
+    return True, f"AGENTS.md template contains all 5 command registry keys"
+
+
+def session_log_context_pointer(config):
+    """Verify SESSION_LOG.md template uses 'Context pointer' wording."""
+    log_path = config.src_dir / "templates" / "SESSION_LOG.md"
+    assert_exists(log_path)
+    content = read_file(log_path)
+    if "Context pointer:" not in content:
+        raise AssertionError(
+            f"SESSION_LOG.md template missing 'Context pointer:' wording\n"
+            f"  path: {log_path}"
+        )
+    return True, "SESSION_LOG.md template uses contextual pointer wording"
+
+
+def active_feature_sanitized(config):
+    """Verify installer creates an empty active_feature (safe for format validation)."""
+    tmp, _ = _do_first_install(config)
+    try:
+        af_path = tmp / ".claude" / "active_feature"
+        assert_exists(af_path)
+        assert_file_empty(af_path)
+        return True, "active_feature created empty (safe for format validation)"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
+def installer_creates_required_dirs(config):
+    """Verify installer creates .claude/skills/ and features/ directories."""
+    tmp, result = _do_first_install(config)
+    try:
+        assert_dir_exists(tmp / ".claude" / "skills")
+        assert_dir_exists(tmp / "features")
+        return True, ".claude/skills/ and features/ directories created"
+    finally:
+        if not config.keep_temp:
+            cleanup_temp_repo(tmp)
+
+
 # ---------- Scenario registry ----------
 # (function, required)
 
@@ -260,6 +330,11 @@ SCENARIOS = {
     "installer_second_run": (installer_second_run, True),
     "managed_skill_updates": (managed_skill_updates, True),
     "template_markers": (template_markers, True),
+    "agents_version_marker": (agents_version_marker, True),
+    "agents_command_registry": (agents_command_registry, True),
+    "session_log_context_pointer": (session_log_context_pointer, True),
+    "active_feature_sanitized": (active_feature_sanitized, True),
+    "installer_creates_required_dirs": (installer_creates_required_dirs, True),
     "claude_probe": (claude_probe, False),
 }
 

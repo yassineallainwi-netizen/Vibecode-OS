@@ -2,6 +2,13 @@
 
 ---
 
+## Session 2026-03-20
+- FEATURE-007 complete: War Room manifest, AGENTS heuristics, CLAUDE.md bridge, Git Ghost, security hardening
+- Nothing open — all 18 acceptance criteria pass; 10/10 smoke tests green
+- Context pointer: read features/FEATURE-008-hardened-verification-grounding/SPEC.md to continue
+
+---
+
 ## Session 002
 - Date: 2026-03-18
 - Goal: Revise spec for Claude Code skills format and implement core skill commands
