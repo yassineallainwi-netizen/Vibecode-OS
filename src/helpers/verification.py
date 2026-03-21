@@ -9,6 +9,7 @@ Python 3.8+, stdlib only.
 import hashlib
 import os
 import re
+import shlex
 import subprocess
 
 
@@ -58,7 +59,7 @@ def evidence_strength_display(labels: list) -> str:
 
 # Trusted PATH-resolved tool names (no absolute paths)
 TRUSTED_TOOLS = {
-    "python", "python3", "node", "npm", "npx", "yarn", "pnpm",
+    "python", "python3", "py", "node", "npm", "npx", "yarn", "pnpm",
     "pytest", "py.test", "unittest",
     "flutter", "dart",
     "cargo", "rustc",
@@ -72,6 +73,9 @@ TRUSTED_TOOLS = {
     "tsc", "eslint", "flake8", "mypy", "ruff", "pylint",
 }
 
+# Shell trampolines — never allowed as the executable
+SHELL_TRAMPOLINES = {"cmd", "powershell", "pwsh", "bash", "sh", "zsh", "fish", "csh"}
+
 # Shell metacharacters that are never allowed
 SHELL_METACHARACTERS = re.compile(r'[|&;`$<>]|\$\(|\$\{')
 
@@ -84,31 +88,52 @@ ABSOLUTE_PATH = re.compile(r'^(/|[A-Za-z]:[/\\])')
 
 def validate_command(cmd: str) -> tuple:
     """
-    Validate a verification command against the allow-list.
+    Validate a verification command against the strict allow-list.
     Returns (is_valid: bool, reason: str).
+
+    Rejection order:
+    1. Empty / whitespace-only
+    2. Multiline (\\n or \\r)
+    3. Shell metacharacters
+    4. shlex.split produces empty argv
+    5. Normalize executable: basename → lower → strip .exe/.cmd/.bat
+    6. Privileged commands
+    7. Absolute paths
+    8. Path separators in executable name (PATH-based only)
+    9. Shell trampolines (cmd, powershell, pwsh, bash, sh, zsh, fish, csh)
+    10. Not in TRUSTED_TOOLS
     """
     if not cmd or not cmd.strip():
         return False, "Empty command"
 
     stripped = cmd.strip()
 
-    # Block shell metacharacters
-    if SHELL_METACHARACTERS.search(stripped):
-        return False, f"Shell metacharacters not allowed: {stripped!r}"
-
     # Block newlines (command injection via multiline)
     if "\n" in stripped or "\r" in stripped:
         return False, "Newlines not allowed in commands"
 
-    # Extract the executable name (first token)
-    parts = stripped.split()
+    # Block shell metacharacters
+    if SHELL_METACHARACTERS.search(stripped):
+        return False, f"Shell metacharacters not allowed: {stripped!r}"
+
+    # Parse into tokens (Windows-aware)
+    try:
+        parts = shlex.split(stripped, posix=(os.name != "nt"))
+    except ValueError as exc:
+        return False, f"Command parse error: {exc}"
     if not parts:
-        return False, "Empty command"
+        return False, "Empty command after parsing"
 
     executable = parts[0]
 
+    # Normalize: basename → lowercase → strip .exe / .cmd / .bat
+    exec_base = os.path.basename(executable).lower()
+    for suffix in (".exe", ".cmd", ".bat"):
+        if exec_base.endswith(suffix):
+            exec_base = exec_base[: -len(suffix)]
+            break
+
     # Block privileged commands
-    exec_base = os.path.basename(executable).lower().rstrip(".exe")
     if exec_base in PRIVILEGED_COMMANDS:
         return False, f"Privileged command not allowed: {executable!r}"
 
@@ -116,8 +141,18 @@ def validate_command(cmd: str) -> tuple:
     if ABSOLUTE_PATH.match(executable):
         return False, f"Absolute executable paths not allowed: {executable!r}"
 
-    # Warn but allow if first token is not in trusted list (may be a script or alias)
-    # The allow-list is advisory — Claude decides whether to proceed for unknown tools
+    # Block path separators in executable name (must be PATH-based)
+    if "/" in executable or "\\" in executable:
+        return False, f"Path separators in executable not allowed: {executable!r}"
+
+    # Block shell trampolines
+    if exec_base in SHELL_TRAMPOLINES:
+        return False, f"Shell trampoline not allowed: {executable!r}"
+
+    # Strict allow-list — unknown executables are rejected
+    if exec_base not in TRUSTED_TOOLS:
+        return False, f"Executable not in trusted list: {executable!r}"
+
     return True, "OK"
 
 
@@ -134,7 +169,7 @@ def run_verified_command(cmd: str, cwd: str, timeout: int = 30, max_output: int 
       - stdout: str (ANSI-stripped, capped)
       - stderr: str (ANSI-stripped, capped)
       - truncated: bool
-      - error: str | None (on execution failure)
+      - error: Optional[str] (on execution failure)
     """
     is_valid, reason = validate_command(cmd)
     if not is_valid:
@@ -155,9 +190,19 @@ def run_verified_command(cmd: str, cwd: str, timeout: int = 30, max_output: int 
             safe_env[k] = os.environ[k]
 
     try:
+        parts = shlex.split(cmd, posix=(os.name != "nt"))
+        if not parts:
+            return {
+                "success": False,
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "",
+                "truncated": False,
+                "error": "Command parse produced empty argv",
+            }
         result = subprocess.run(
-            cmd,
-            shell=True,
+            parts,
+            shell=False,
             cwd=str(cwd),
             capture_output=True,
             timeout=timeout,

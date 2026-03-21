@@ -2,7 +2,7 @@
 
 ## Overview
 
-VibeCode OS v2.0.0 ships as both a **standalone skill pack** (`.claude/skills/`) and an **official Claude Code plugin** (`.claude-plugin/`). Both modes are fully functional. The plugin is an optional packaging layer — it does not replace standalone mode.
+VibeCode OS v2.0.1 ships as both a **standalone skill pack** (`.claude/skills/`) and an **official Claude Code plugin** (`.claude-plugin/`). Both modes are fully functional. The plugin is an optional packaging layer — it does not replace standalone mode.
 
 ---
 
@@ -76,6 +76,12 @@ To publish VibeCode OS to the Claude Code plugin marketplace:
 3. All helper scripts must be present under `.claude-plugin/helpers/`
 4. Run the full smoke test suite including parity tests (0 failures required)
 5. Bump version and tag a release commit
+
+---
+
+## Python version requirement
+
+All helper scripts (`src/helpers/`, `src/adapter/`, `.claude-plugin/helpers/`) require **Python 3.8+** and use stdlib only (no pip installs). Scripts are verified for 3.8 syntax compatibility via the `py38_compatible_imports` smoke scenario.
 
 ---
 

@@ -5,8 +5,11 @@ Detects available host capabilities with timeout and local caching.
 Python 3.8+, stdlib only.
 """
 
+import calendar
 import json
 import os
+import subprocess
+import sys
 import time
 
 CAPABILITY_CACHE_PATH = os.path.join(".claude", "runtime", "capability_cache.json")
@@ -41,7 +44,7 @@ def _load_cache(root: str) -> dict:
             try:
                 ts_clean = cached_at.rstrip("Z").replace("T", " ")
                 t = time.strptime(ts_clean, "%Y-%m-%d %H:%M:%S")
-                age_hours = (time.time() - time.mktime(t)) / 3600
+                age_hours = (time.time() - calendar.timegm(t)) / 3600
                 if age_hours > CACHE_TTL_HOURS:
                     return {}
             except (ValueError, TypeError):
@@ -88,18 +91,34 @@ def _probe_file_write(root: str) -> bool:
         return False
 
 
-def _probe_command_exec() -> bool:
-    """Check if subprocess execution is available."""
-    import subprocess
-    try:
-        result = subprocess.run(
-            ["python", "--version"],
-            capture_output=True,
-            timeout=2,
-        )
-        return result.returncode == 0
-    except (OSError, subprocess.TimeoutExpired, FileNotFoundError):
-        return False
+def _probe_command_exec(timeout_ms: int = PROBE_TIMEOUT_MS) -> bool:
+    """
+    Check if subprocess execution is available.
+    Tries sys.executable, python3, python, py in order — deduped.
+    Respects a true total deadline budget across all candidates.
+    """
+    budget_end = time.time() + timeout_ms / 1000.0
+    seen = set()
+    candidates = []
+    for c in [sys.executable, "python3", "python", "py"]:
+        if c and c not in seen:
+            seen.add(c)
+            candidates.append(c)
+    for launcher in candidates:
+        remaining = budget_end - time.time()
+        if remaining <= 0:
+            break
+        try:
+            r = subprocess.run(
+                [launcher, "--version"],
+                capture_output=True,
+                timeout=min(2.0, remaining),
+            )
+            if r.returncode == 0:
+                return True
+        except (OSError, subprocess.TimeoutExpired, FileNotFoundError):
+            continue
+    return False
 
 
 def probe_capabilities(root: str = ".", timeout_ms: int = PROBE_TIMEOUT_MS) -> dict:
@@ -142,8 +161,9 @@ def probe_capabilities(root: str = ".", timeout_ms: int = PROBE_TIMEOUT_MS) -> d
         capabilities["file_write"] = False
 
     if (time.time() - start) * 1000 < timeout_ms:
+        remaining_ms = timeout_ms - (time.time() - start) * 1000
         try:
-            capabilities["command_exec"] = _probe_command_exec()
+            capabilities["command_exec"] = _probe_command_exec(max(0, remaining_ms))
         except Exception:
             capabilities["command_exec"] = False
     else:

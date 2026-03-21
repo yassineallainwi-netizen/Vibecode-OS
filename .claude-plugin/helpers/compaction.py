@@ -7,11 +7,13 @@ delta computation, and staleness checks.
 Python 3.8+, stdlib only.
 """
 
+import calendar
 import hashlib
 import json
 import os
 import re
 import time
+from typing import Optional
 
 from context import atomic_write
 
@@ -66,10 +68,12 @@ def _compute_artifact_checksum(data: dict) -> str:
 # ---------- Project state ----------
 
 
-def write_project_state(root: str, data: dict) -> None:
+def write_project_state(root: str, data: dict) -> tuple:
     """
     Write project_state.json atomically to .claude/context/.
     Adds schema metadata and checksum automatically.
+    Returns (True, "ok") on success, (False, reason) on failure.
+    Skills treat False as compact-path unavailable — never as a blocker.
     """
     path = os.path.join(root, ".claude", "context", "project_state.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -94,11 +98,32 @@ def write_project_state(root: str, data: dict) -> None:
     artifact.setdefault("command_registry", {})
     artifact.setdefault("derived_from", "vibe-done")
 
+    # Validate in memory before writing
+    ok, reason = validate_schema(artifact, PROJECT_STATE_REQUIRED)
+    if not ok:
+        return False, f"In-memory validation failed: {reason}"
+
     artifact["checksum"] = _compute_artifact_checksum(artifact)
-    atomic_write(path, json.dumps(artifact, indent=2, ensure_ascii=False) + "\n")
+    content = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
+
+    def _post_write_validator(written: str) -> tuple:
+        try:
+            parsed = json.loads(written)
+        except json.JSONDecodeError as exc:
+            return False, f"JSON parse failed: {exc}"
+        v_ok, v_reason = validate_schema(parsed, PROJECT_STATE_REQUIRED)
+        if not v_ok:
+            return False, f"Post-write schema invalid: {v_reason}"
+        return True, "ok"
+
+    try:
+        atomic_write(path, content, validator=_post_write_validator)
+    except Exception as exc:
+        return False, str(exc)
+    return True, "ok"
 
 
-def read_project_state(root: str) -> dict | None:
+def read_project_state(root: str) -> Optional[dict]:
     """
     Read and validate project_state.json.
     Returns None on any failure (missing, corrupt, schema mismatch, checksum fail).
@@ -129,8 +154,12 @@ def read_project_state(root: str) -> dict | None:
 # ---------- Feature state ----------
 
 
-def write_feature_state(root: str, feature_id: str, data: dict) -> None:
-    """Write feature_FEATURE-NNN.json atomically to .claude/context/."""
+def write_feature_state(root: str, feature_id: str, data: dict) -> tuple:
+    """
+    Write feature_FEATURE-NNN.json atomically to .claude/context/.
+    Returns (True, "ok") on success, (False, reason) on failure.
+    Skills treat False as compact-path unavailable — never as a blocker.
+    """
     safe_id = re.sub(r"[^A-Za-z0-9_-]", "_", feature_id)
     path = os.path.join(root, ".claude", "context", f"feature_{safe_id}.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -158,11 +187,32 @@ def write_feature_state(root: str, feature_id: str, data: dict) -> None:
     artifact.setdefault("checkpoint_id", "")
     artifact.setdefault("derived_from", "vibe-done")
 
+    # Validate in memory before writing
+    ok, reason = validate_schema(artifact, FEATURE_STATE_REQUIRED)
+    if not ok:
+        return False, f"In-memory validation failed: {reason}"
+
     artifact["checksum"] = _compute_artifact_checksum(artifact)
-    atomic_write(path, json.dumps(artifact, indent=2, ensure_ascii=False) + "\n")
+    content = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
+
+    def _post_write_validator(written: str) -> tuple:
+        try:
+            parsed = json.loads(written)
+        except json.JSONDecodeError as exc:
+            return False, f"JSON parse failed: {exc}"
+        v_ok, v_reason = validate_schema(parsed, FEATURE_STATE_REQUIRED)
+        if not v_ok:
+            return False, f"Post-write schema invalid: {v_reason}"
+        return True, "ok"
+
+    try:
+        atomic_write(path, content, validator=_post_write_validator)
+    except Exception as exc:
+        return False, str(exc)
+    return True, "ok"
 
 
-def read_feature_state(root: str, feature_id: str) -> dict | None:
+def read_feature_state(root: str, feature_id: str) -> Optional[dict]:
     """Read and validate a feature compact artifact. Returns None on any failure."""
     safe_id = re.sub(r"[^A-Za-z0-9_-]", "_", feature_id)
     path = os.path.join(root, ".claude", "context", f"feature_{safe_id}.json")
@@ -204,11 +254,8 @@ def is_stale(artifact: dict, max_age_hours: int = STALE_HOURS) -> bool:
         # Format: YYYY-MM-DDTHH:MM:SSZ
         ts_str_clean = ts_str.rstrip("Z").replace("T", " ")
         t = time.strptime(ts_str_clean, "%Y-%m-%d %H:%M:%S")
-        artifact_epoch = time.mktime(time.struct_time(
-            t.tm_year, t.tm_mon, t.tm_mday,
-            t.tm_hour, t.tm_min, t.tm_sec,
-            0, 0, 0
-        ))
+        # calendar.timegm treats t as UTC — no local-TZ distortion
+        artifact_epoch = calendar.timegm(t)
         now_epoch = time.time()
         age_hours = (now_epoch - artifact_epoch) / 3600
         return age_hours > max_age_hours

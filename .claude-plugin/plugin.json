@@ -1,6 +1,6 @@
 {
   "name": "vibecode-os",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Structured sessions for vibe coders — spec, verify, and ship with confidence",
   "skills": [
     "skills/vibe-start",

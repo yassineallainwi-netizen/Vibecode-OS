@@ -2,6 +2,16 @@
 
 ---
 
+## Session 2026-03-21
+- v2.0.1 hardening patch: 4 runtime bug fixes, repo-wide py38 scan, regression tests, doc sync
+- Bugs fixed: is_stale() always-stale (calendar.timegm), shell=True injection (shell=False+shlex), dict|None py310 syntax (Optional[dict]), capabilities only tried "python" (multi-launcher+deadline)
+- Added: atomic_write validator callback, strict allow-list (pwsh+trampolines blocked), pre-rename validation
+- New: tests/smoke/test_helpers.py (15 regression tests), 3 new smoke scenarios (27 total)
+- Docs: README v2.0.1, PROJECT_CONTEXT stage corrected, DECISIONS 009, plugin_migration Python note
+- Nothing open — all release gates pass; ready to sync .claude-plugin/ via install.py --plugin
+
+---
+
 ## Session 2026-03-20
 - FEATURE-010 complete: official plugin format, adapter boundary, 9 parity tests, 24/24 smoke tests
 - Nothing open — all 12 acceptance criteria pass; 24/24 smoke + 9/9 parity tests green

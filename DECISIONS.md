@@ -73,6 +73,22 @@
 
 ---
 
+## Decision 009
+- Date: 2026-03-21
+- Feature: v2.0.1 hardening
+- Status: Accepted
+- Decision: Strict verification command allow-list — unknown executables are rejected; verification commands must be PATH-based only; no shell execution path
+- Why: The advisory allow-list (v2.0.0) silently allowed arbitrary executables, undermining the security goal of the verification workflow. `shell=True` introduced a command-injection vector even after metacharacter filtering. Strict rejection of unknown tools and shell trampolines eliminates both attack surfaces.
+- Rules enforced:
+  - Executables normalized: basename → lowercase → strip .exe/.cmd/.bat
+  - Shell trampolines blocked: cmd, powershell, pwsh, bash, sh, zsh, fish, csh
+  - Path separators in executable name → rejected (PATH-based only)
+  - Not in TRUSTED_TOOLS → rejected
+  - subprocess.run uses `shell=False` + `shlex.split(posix=(os.name != "nt"))`
+- Tradeoff: Users with unusual test runners not in TRUSTED_TOOLS must request additions. Acceptable — the trusted list covers all major runtimes and is easy to extend.
+
+---
+
 ## Decision 008
 - Date: 2026-03-20
 - Feature: FEATURE-010-hardened-plugin-delivery

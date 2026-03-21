@@ -1,4 +1,4 @@
-# VibeCode OS  v1.0.0
+# VibeCode OS  v2.0.1
 
 A structured feature-by-feature workflow for solo vibe coders using Claude Code.
 
@@ -25,7 +25,13 @@ your-project/
 │   │   ├── vibe-resume/SKILL.md
 │   │   ├── vibe-status/SKILL.md
 │   │   └── vibe-done/SKILL.md
-│   └── active_feature          # tracks the current feature ID
+│   ├── active_feature          # tracks the current feature ID
+│   ├── context/                # compact JSON artifacts (token-efficient resumption)
+│   └── runtime/                # capability cache and probes
+├── .claude-plugin/             # official Claude Code plugin format (optional)
+│   ├── plugin.json
+│   ├── skills/                 # packaged skill copies
+│   └── helpers/                # helper scripts
 ├── PROJECT_CONTEXT.md           # what this project is and how it works
 ├── AGENTS.md                    # working rules for Claude
 ├── DECISIONS.md                 # why things were built a certain way
@@ -41,8 +47,14 @@ your-project/
 # Navigate to YOUR project (not the VibeCode OS repo)
 cd /path/to/your-project
 
-# Run the installer, pointing to where you cloned VibeCode OS
+# Standalone mode (default — works everywhere including remote sessions)
 python /path/to/VibeCodeOS/install.py
+
+# Plugin mode (installs .claude-plugin/ alongside standalone skills)
+python /path/to/VibeCodeOS/install.py --plugin
+
+# Roll back plugin mode (removes .claude-plugin/, keeps standalone)
+python /path/to/VibeCodeOS/install.py --rollback
 ```
 
 If you don't have VibeCode OS yet:
@@ -112,7 +124,7 @@ Interactive skill behavior still requires manual QA — see the checklist above.
 ## Limitations
 
 - **Prompt-based skills:** Claude may occasionally deviate from instructions.
-- **Project-local installation:** Skills are injected into your repo, not installed globally as a packaged Claude plugin.
-- **Structural tests only:** Automated smoke tests cover the installer and file integrity. Interactive skill behavior still requires manual QA.
+- **Remote sessions:** The `.claude-plugin/` format is not loaded in remote Claude Code sessions. Standalone `.claude/skills/` always works.
+- **Structural tests only:** Automated smoke tests cover the installer, file integrity, and helper behavior. Interactive skill behavior still requires manual QA.
 - **Single-developer focus:** Designed for solo builders, not multi-player team environments.
 - **Log capping:** The active session log is capped at 10 entries. Older sessions roll over to SESSION_ARCHIVE.md.

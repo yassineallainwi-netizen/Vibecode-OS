@@ -606,6 +606,77 @@ def standalone_mode_unchanged(config):
             cleanup_temp_repo(tmp)
 
 
+# ---------- FEATURE-011 / v2.0.1 scenarios ----------
+
+
+def py38_compatible_imports(config):
+    """Verify all Python helper files are compatible with Python 3.8 syntax."""
+    import ast
+    helpers_dir = REPO_ROOT / "src" / "helpers"
+    adapter_dir = REPO_ROOT / "src" / "adapter"
+    py_files = list(helpers_dir.glob("*.py")) + list(adapter_dir.glob("*.py"))
+    errors = []
+    for py_file in py_files:
+        source = py_file.read_text(encoding="utf-8")
+        try:
+            try:
+                ast.parse(source, feature_version=(3, 8))
+            except TypeError:
+                # feature_version not supported — fall back to basic parse + banned scan
+                ast.parse(source)
+                # Banned 3.10+ construct scan
+                import re as _re
+                if _re.search(r"(?<!\w)match\s+\w.*:\s*$", source, _re.MULTILINE):
+                    errors.append(f"{py_file.name}: may use structural match (3.10+)")
+        except SyntaxError as exc:
+            errors.append(f"{py_file.name}: {exc}")
+    if errors:
+        raise AssertionError(
+            "Python 3.8 compatibility failures:\n" + "\n".join(errors)
+        )
+    return True, f"All {len(py_files)} helper files pass Python 3.8 compatibility check"
+
+
+def probe_capabilities_command_exec_true(config):
+    """Verify probe_capabilities() reports command_exec: True in current env."""
+    import sys as _sys
+    import tempfile as _tempfile
+    adapter_path = REPO_ROOT / "src" / "adapter"
+    _sys.path.insert(0, str(adapter_path))
+    try:
+        from capabilities import probe_capabilities
+        with _tempfile.TemporaryDirectory() as tmpdir:
+            caps = probe_capabilities(tmpdir)
+        if not caps.get("command_exec"):
+            raise AssertionError(
+                f"probe_capabilities() returned command_exec=False in current env; "
+                f"full caps: {caps}"
+            )
+        return True, "probe_capabilities() correctly reports command_exec: True"
+    except ImportError as exc:
+        raise AssertionError(f"Cannot import capabilities: {exc}")
+
+
+def verified_command_no_shell(config):
+    """Verify run_verified_command('python --version', cwd) exits 0 with shell=False."""
+    import sys as _sys
+    import tempfile as _tempfile
+    helpers_path = REPO_ROOT / "src" / "helpers"
+    _sys.path.insert(0, str(helpers_path))
+    try:
+        from verification import run_verified_command
+        with _tempfile.TemporaryDirectory() as tmpdir:
+            result = run_verified_command("python --version", tmpdir, timeout=10)
+        if result["exit_code"] != 0:
+            raise AssertionError(
+                f"run_verified_command('python --version') failed: "
+                f"exit_code={result['exit_code']}, error={result.get('error')!r}"
+            )
+        return True, f"run_verified_command succeeds with shell=False: exit_code=0"
+    except ImportError as exc:
+        raise AssertionError(f"Cannot import verification helper: {exc}")
+
+
 # ---------- Scenario registry ----------
 # (function, required)
 
@@ -633,6 +704,9 @@ SCENARIOS = {
     "plugin_skills_present": (plugin_skills_present, True),
     "plugin_helpers_present": (plugin_helpers_present, True),
     "standalone_mode_unchanged": (standalone_mode_unchanged, True),
+    "py38_compatible_imports": (py38_compatible_imports, True),
+    "probe_capabilities_command_exec_true": (probe_capabilities_command_exec_true, True),
+    "verified_command_no_shell": (verified_command_no_shell, True),
     "claude_probe": (claude_probe, False),
 }
 

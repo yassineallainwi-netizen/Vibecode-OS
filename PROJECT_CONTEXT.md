@@ -3,7 +3,7 @@
 ## Project Identity
 - Name: VibeCode OS
 - One-line summary: A Claude Code skill pack that gives vibe coders structured memory, automatic context persistence, and verification — so AI-assisted projects stop falling apart across sessions.
-- Current stage: Pre-build (speccing)
+- Current stage: v2.0.1 — shipped
 - Primary owner: Solo founder (side hustle)
 - Repository: Local (will move to GitHub when ready)
 
@@ -49,7 +49,9 @@ The product is a set of Claude Code skills (`.claude/skills/<name>/SKILL.md`) an
 - **Skills** provide four commands: `/vibe-start`, `/vibe-resume`, `/vibe-status`, `/vibe-done` — each is a self-contained skill directory using Claude Code's skills format with YAML frontmatter
 - **Context files** (PROJECT_CONTEXT.md, AGENTS.md, DECISIONS.md, SESSION_LOG.md) are structured plain markdown that Claude reads at session start and writes at session end
 - **Active feature tracking** via `.claude/active_feature` (plain text file with current feature ID)
-- **Optional hooks** (v2) can enforce structure automatically via Claude Code's hook system
+- **Compact artifacts** in `.claude/context/` — JSON snapshots for token-efficient session resumption; dead-man's switch triggers full reconstruction after 24h
+- **Plugin mode** — `.claude-plugin/` directory with official Claude Code plugin format; coexists with standalone mode; not available in remote sessions
+- **Adapter layer** — `src/adapter/` bridges skill-pack and plugin modes: capability detection, War Room bridge, action dispatch
 - **No backend, no API, no cloud dependency** — everything is local files
 
 Main data flow:
@@ -87,10 +89,10 @@ The project is successful when:
 - The path to a paid tier ($9-19/mo) is clear and validated by user feedback
 
 ## Current Priorities
-1. Define the exact skill commands and file structure
-2. Build the core skill pack (free, open source)
-3. Test on a real project end-to-end
-4. Write launch content (1-2 posts showing before/after)
+1. Runtime hardening and behavioral QA (v2.0.1)
+2. Distribution — publish to GitHub and Claude Code plugin marketplace
+3. User feedback loop — early adopters, iterate on skill wording
+4. Paid tier scoping ($9-19/mo agency features)
 
 ## Open Risks
 - Claude Code skill format may change — keep skills simple and adaptable

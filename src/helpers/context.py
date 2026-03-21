@@ -17,25 +17,47 @@ def compute_sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def atomic_write(path: str, content: str) -> None:
+def atomic_write(path: str, content: str, validator=None) -> None:
     """
-    Write content to path atomically: temp file → fsync → rename.
-    Never leaves a partial file on disk.
+    Write content to path atomically: temp file → fsync → (validate) → rename.
+    Never leaves a partial file at the destination on failure.
+
+    validator: optional callable(content: str) -> Tuple[bool, str]
+        If validator returns (False, reason): temp file is deleted and
+        ValueError(reason) is raised — the destination file is never touched.
+        Pass validator=None (default) to keep existing behavior.
     """
     dir_name = os.path.dirname(os.path.abspath(path))
     os.makedirs(dir_name, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(dir=dir_name, prefix=".vibe_tmp_")
+    renamed = False
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(content)
             f.flush()
             os.fsync(f.fileno())
+        if validator is not None:
+            # Re-open and validate temp file BEFORE renaming into place
+            try:
+                with open(tmp_path, "r", encoding="utf-8") as f:
+                    written = f.read()
+                ok, reason = validator(written)
+            except Exception as exc:
+                ok, reason = False, f"Validator read failed: {exc}"
+            if not ok:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+                raise ValueError(f"Pre-rename validation failed: {reason}")
         os.replace(tmp_path, path)
+        renamed = True
     except Exception:
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
+        if not renamed:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
         raise
 
 
