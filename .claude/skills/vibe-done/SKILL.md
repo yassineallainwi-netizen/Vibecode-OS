@@ -52,7 +52,7 @@ Before running a verification command, check `.claude/approved_commands.json`:
 - If command is approved for this repo (matching cmd_hash + repo_id): run without prompting
 - If not found, or hash differs, or file missing/corrupt: ask the user once:
   > "I'd like to run `[command]` to verify. **Approve** (run now + remember), **approve-all** (remember all future commands), or **skip** (mark as user_reported)?"
-- On Approve: add to approved_commands.json (call `python src/helpers/approval.py` or apply logic inline)
+- On Approve: add to approved_commands.json — run `python src/helpers/approval.py approve "<cmd>"` if Bash is available; if not, append `{"command": "<cmd>", "cmd_hash": "<sha256>", "approved_at": "<ISO-UTC>", "schema_version": 1}` to `.claude/approved_commands.json` directly
 - On Skip: do not run; mark evidence as `user_reported`
 
 ## Command execution safety
@@ -61,7 +61,7 @@ When running a verification command:
 - **Allow:** trusted PATH-resolved tools (python, node, npm, pytest, flutter, cargo, go, make, jest, etc.)
 - Set Bash timeout to 30 seconds
 - Cap output at 50KB (truncate if exceeded; set `truncated: true` in evidence)
-- Strip ANSI escape sequences from output before evaluating (call `src/helpers/verification.py strip_ansi` or apply inline)
+- Strip ANSI escape sequences from output before evaluating — run `python src/helpers/verification.py strip_ansi` if Bash is available; if not, strip sequences matching `\x1b\[[0-9;]*m` and `\x1b\[[0-9;]*[A-Za-z]` inline
 - If output appears binary: skip and label `user_reported`
 - Non-zero exit code → never classify as `command_verified`
 
@@ -143,7 +143,7 @@ If running a verification command, follow Command execution safety rules above.
 
 After execution:
 1. Strip ANSI from output
-2. Triage output: extract test counts, failing files, error classes (call `src/helpers/verification.py triage_log` or apply inline pattern matching)
+2. Triage output: extract test counts, failing files, error classes — run `python src/helpers/verification.py triage_log` if Bash is available; if not, scan for patterns like `(\d+) passed`, `(\d+) failed`, `FAILED`, `Error:` to estimate tests_run and tests_failed
 3. Classify evidence: use `classify_evidence(exit_code, output, triage)` logic
    - Non-zero exit → `command_failed` (strength: low) — a failing run is NOT positive evidence
    - Zero exit, no output → `repo_observed` (strength: high) — ran, nothing complained

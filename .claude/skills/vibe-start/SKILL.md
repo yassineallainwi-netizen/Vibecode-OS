@@ -100,7 +100,7 @@ On Accept or confirmed edits: apply changes, then run CLAUDE.md sync (step 1.6).
 **Never re-prompt for AGENTS on features 2+.**
 
 ### 1.6. Sync CLAUDE.md bridge
-Run `python src/helpers/claude_md.py` via Bash if available, OR apply the sync logic inline:
+Run `python src/helpers/claude_md.py` via Bash to regenerate CLAUDE.md. If Bash is unavailable, skip this step and note "CLAUDE.md sync skipped (Bash unavailable)" in the response.
 
 Read AGENTS.md and PROJECT_CONTEXT.md. Generate CLAUDE.md in the project root as a compact bridge:
 - Header: `<!-- vibecode:claude-bridge:auto-generated -->`
