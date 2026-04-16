@@ -52,27 +52,14 @@ Mini-resume omits steps 1-4 and goes directly to Step 5 with whatever can be det
 
 ## Compact artifact check (run before Step 1)
 
-Before reading any markdown files, check for compact artifacts in `.claude/context/`:
+Only run this check if `.claude/context/` directory exists. If absent, skip directly to Step 1.
 
-**Read `.claude/context/project_state.json`** (if it exists):
-- Parse JSON; validate `schema_version == 1` and all required fields present
-- Compute checksum: SHA-256 of content excluding `checksum` field; compare to stored `checksum`
-- Check freshness: parse `last_compacted` ISO-8601 UTC; if older than 24h → stale
-- If valid AND fresh: set `context_source = "compact_ready"`
-- If missing, corrupt, checksum mismatch, schema mismatch, or stale: set `context_source = "full_scan_required"`
+If `.claude/context/project_state.json` exists:
+1. Validate: schema_version == 1 AND all required fields present AND checksum matches AND age ≤ 24h
+2. All four checks pass → `context_source = "compact_ready"` (use artifacts instead of full scan)
+3. Any check fails → `context_source = "full_scan_required"` (run Steps 1-4 normally)
 
-**If context_source = compact_ready**, also read `feature_FEATURE-NNN.json` (use `last_completed_feature` or `active_feature` from project_state):
-- Same validation (schema, checksum, freshness)
-- If feature artifact invalid or stale: set `context_source = "mixed"`
-
-**Context source definitions:**
-- `compact_ready` — both artifacts valid and fresh; prefer over full file scan
-- `mixed` — project state valid but feature artifact missing or stale; supplement with targeted file reads
-- `full_scan_required` — artifacts missing, corrupt, or stale; run full steps 1-4 as normal
-
-**Dead-man's switch:** if artifact age > 24h, always fall back to `full_scan_required` regardless of checksum validity.
-
-**Reconstruction note:** when falling back, set `reconstruction_reason` to one of: "artifacts_missing", "artifacts_stale", "checksum_mismatch", "schema_mismatch".
+If compact_ready: also validate the active feature artifact (`feature_FEATURE-NNN.json`). If it fails, set `context_source = "mixed"` (supplement with targeted file reads).
 
 ---
 
