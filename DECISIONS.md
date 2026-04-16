@@ -73,6 +73,15 @@
 
 ---
 
+## Decision 008
+- Date: 2026-03-20
+- Feature: FEATURE-010-hardened-plugin-delivery
+- Decision: Official Claude Code plugin format (`.claude-plugin/plugin.json`) rather than a custom Python runtime surface
+- Why: Claude Code's official plugin format provides correct skill loading, capability negotiation, and marketplace distribution; a custom Python runtime would duplicate infrastructure and break future platform integration
+- Tradeoff: Plugin not available in remote sessions — standalone `.claude/skills` is the documented fallback, which is fully functional
+
+---
+
 ## Decision 009
 - Date: 2026-03-21
 - Feature: v2.0.1 hardening
@@ -86,12 +95,3 @@
   - Not in TRUSTED_TOOLS → rejected
   - subprocess.run uses `shell=False` + `shlex.split(posix=(os.name != "nt"))`
 - Tradeoff: Users with unusual test runners not in TRUSTED_TOOLS must request additions. Acceptable — the trusted list covers all major runtimes and is easy to extend.
-
----
-
-## Decision 008
-- Date: 2026-03-20
-- Feature: FEATURE-010-hardened-plugin-delivery
-- Decision: Official Claude Code plugin format (`.claude-plugin/plugin.json`) rather than a custom Python runtime surface
-- Why: Claude Code's official plugin format provides correct skill loading, capability negotiation, and marketplace distribution; a custom Python runtime would duplicate infrastructure and break future platform integration
-- Tradeoff: Plugin not available in remote sessions — standalone `.claude/skills` is the documented fallback, which is fully functional

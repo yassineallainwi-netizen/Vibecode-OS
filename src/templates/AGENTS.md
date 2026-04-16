@@ -5,7 +5,7 @@
 Build this project incrementally, one feature at a time, using the VibeCode OS workflow.
 
 ## Required Reading
-Before any change, read: `PROJECT_CONTEXT.md`, `SESSION_LOG.md` (latest entry), and the active feature's `SPEC.md`.
+Before any change, read: `PROJECT_CONTEXT.md`, `DECISIONS.md`, `SESSION_LOG.md` (latest entry), and the active feature's `SPEC.md`.
 
 ## Workflow Mode
 Commands available in this project:
@@ -46,6 +46,13 @@ When a test fails, build breaks, or behavior doesn't match the spec — STOP add
 
 ## Simplicity Discipline
 Before marking any feature complete: can this be done in fewer lines? Do the abstractions earn their complexity? Flag over-engineering as a Known Gap in VERIFY.md. Prefer the boring, obvious solution.
+
+## Completion Rule
+A task is complete only when:
+- It does what the spec says
+- It can be verified by running a test or a concrete check
+- Relevant docs are updated
+- The session log records what happened
 
 ## Project-specific rules
 

@@ -46,7 +46,7 @@ Solve the five core problems that cause vibe coding projects to fail:
 ## Architecture Summary
 The product is a set of Claude Code skills (`.claude/skills/<name>/SKILL.md`) and optional hook scripts that live inside the user's repo:
 
-- **Skills** provide four commands: `/vibe-start`, `/vibe-resume`, `/vibe-status`, `/vibe-done` — each is a self-contained skill directory using Claude Code's skills format with YAML frontmatter
+- **Skills** provide five commands: `/vibe-start`, `/vibe-resume`, `/vibe-status`, `/vibe-done`, `/vibe-ship` — each is a self-contained skill directory using Claude Code's skills format with YAML frontmatter
 - **Context files** (PROJECT_CONTEXT.md, AGENTS.md, DECISIONS.md, SESSION_LOG.md) are structured plain markdown that Claude reads at session start and writes at session end
 - **Active feature tracking** via `.claude/active_feature` (plain text file with current feature ID)
 - **Compact artifacts** in `.claude/context/` — JSON snapshots for token-efficient session resumption; dead-man's switch triggers full reconstruction after 24h

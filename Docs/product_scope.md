@@ -24,10 +24,11 @@ Solo builders using Claude Code who are NOT professional software engineers. The
 5. Handing off or explaining what was built (to a client, a cofounder, or future-you)
 
 ## In Scope (v1 — Free, Open Source)
-- `/start-feature` command — creates spec, guides requirements gathering
-- `/resume` command — restores context from session log
-- `/status` command — shows what's done, what's open, what's broken
-- `/done` command — runs verification, writes session summary, closes feature
+- `/vibe-start` command — creates spec, guides requirements gathering; inception mode for day-zero repos
+- `/vibe-resume` command — restores context from session log
+- `/vibe-status` command — shows what's done, what's open, what's broken
+- `/vibe-done` command — runs verification, writes session summary, closes feature
+- `/vibe-ship` command — readiness gate + security scan + release notes draft
 - PROJECT_CONTEXT.md — persistent project identity and architecture notes
 - SESSION_LOG.md — automatic session memory across conversations
 - Feature folders with SPEC.md and VERIFY.md
