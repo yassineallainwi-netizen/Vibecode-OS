@@ -34,6 +34,29 @@ Stop here.
 > Use `/vibe-resume` to repair or reset this state.
 Stop here.
 
+### 1.5. Scope drift check (if git is available)
+After finding the active feature's SPEC.md, run a lightweight scope-drift check.
+
+Read `## Touches` from the active SPEC.md. If the section is missing or empty: skip this check silently.
+
+Run via Bash (read-only, 10s timeout):
+```
+git diff --name-only HEAD
+git status --short
+```
+
+Compare the set of changed files against the Touches list:
+- **Changed but not in Touches:** files being modified that were not anticipated in the spec
+- **In Touches but unchanged:** files the spec expected to change that haven't been touched yet
+
+Surface drift only if it is significant (>2 unexpected files, or a clearly unrelated subsystem touched):
+> ⚠️ **Scope drift detected:**
+> - Changed but not in spec Touches: `file1`, `file2`
+> - In Touches but unchanged: `file3`
+> If scope expanded, update `## Touches` in SPEC.md and consider upgrading Complexity.
+
+If git is unavailable or not a git repo: skip silently. Do not block status output.
+
 ### 2a. Active feature exists with SPEC.md
 Read `features/<feature-id>/SPEC.md` and `features/<feature-id>/VERIFY.md` (if it exists).
 
@@ -71,7 +94,9 @@ Always report in this exact structure:
 >
 > **Mode:** [building / verifying / closing]
 >
-> **Complexity:** [trivial / normal / complex / high-risk — from `## Complexity` in SPEC.md, or "not set"]
+> **Complexity:** [trivial / normal / complex / high-risk — from SPEC.md frontmatter, or "not set"]
+>
+> **Change kind:** [behavioral / instruction-only / mixed — from SPEC.md frontmatter, or "not set"]
 >
 > **Risk flags:** [grounded flags, or "None"]
 >

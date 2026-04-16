@@ -111,6 +111,25 @@ def install_standalone(target, src_dir, created, updated, unchanged, preserved):
     else:
         preserved.append(".claude/runtime/")
 
+    # 9. Install SPEC.md template into .claude/templates/ — managed (update if differs)
+    #    Skills read from .claude/templates/SPEC.md so it is available at runtime even
+    #    when the VibeCode OS source directory is not present in the installed repo.
+    templates_runtime_dir = os.path.join(target, ".claude", "templates")
+    os.makedirs(templates_runtime_dir, exist_ok=True)
+    spec_src = os.path.join(src_dir, "src", "templates", "SPEC.md")
+    spec_dst = os.path.join(templates_runtime_dir, "SPEC.md")
+    if os.path.exists(spec_src):
+        label = ".claude/templates/SPEC.md"
+        if not os.path.exists(spec_dst):
+            shutil.copy2(spec_src, spec_dst)
+            created.append(label)
+        else:
+            if read_file(spec_src) != read_file(spec_dst):
+                shutil.copy2(spec_src, spec_dst)
+                updated.append(label)
+            else:
+                unchanged.append(label)
+
 
 def install_plugin(target, src_dir, created, updated, unchanged):
     """Install official Claude Code plugin to .claude-plugin/ (alongside standalone)."""

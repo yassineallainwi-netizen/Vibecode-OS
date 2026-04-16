@@ -136,7 +136,32 @@ When triggered, emit before the classification step:
 > - Evidence: [label] (reason for downgrade if applicable)
 > - Safest next action: [fix failing test / add tests / verify manually]
 
-### 3.8. Simplicity check (Complete candidates only)
+### 3.8. Change kind gate (read before classifying evidence)
+Read the `Change kind:` frontmatter field from SPEC.md.
+
+**If `instruction-only`:**
+- Every acceptance criterion auto-classifies as `spec_expected` regardless of what was run
+- `command_verified` is only permitted for criteria explicitly tagged `[verify=cmd]` in the spec
+- If no `[verify=cmd]` criteria exist: overall evidence strength is `weak` (spec_expected)
+- Emit in the classification step: *(Evidence auto-graded: instruction-only feature)*
+
+**If `behavioral`:**
+- At least one criterion must produce `command_verified` or `repo_observed`
+- If all criteria end up as `user_reported` or `spec_expected`: warn before completing
+  > ⚠️ This feature is marked behavioral but no criteria were command-verified or repo-observed. Evidence strength: weak. Continue anyway?
+
+**If `mixed`:**
+- Respect per-criterion `[verify=...]` tags: `spec` → `spec_expected`; `cmd` → requires command; `repo` → requires observation; `user` → `user_reported`
+- Mixed features need at least one non-spec-expected criterion verified
+
+**Per-criterion tag honoring (all change kinds):**
+Read each criterion's `[verify=...]` tag from SPEC.md Acceptance criteria section. Use the tag to determine the expected evidence level:
+- `[verify=spec]` → classify as `spec_expected` (do not attempt a command for this criterion)
+- `[verify=user]` → classify as `user_reported` (ask user to confirm; do not run a command)
+- `[verify=repo]` → classify as `repo_observed` (inspect files; no command needed)
+- `[verify=cmd]` → must run a command; classify based on exit code and output
+
+### 3.9. Simplicity check (Complete candidates only)
 Skip if already classifying as Not Ready or Partially Complete.
 
 Scan the files the user says changed. Ask:
@@ -355,7 +380,7 @@ After writing SESSION_LOG.md, automatically compact project state to `.claude/co
 
 **Complete:**
 > "Feature complete. VERIFY.md written."
-> **Next step:** Use `/vibe-start` to begin your next feature.
+> **Next step:** Run the app once to confirm nothing regressed, then `/vibe-start` for the next feature — or `/vibe-ship` if this finishes a milestone.
 Clear `.claude/active_feature`.
 
 **Partially Complete:**
