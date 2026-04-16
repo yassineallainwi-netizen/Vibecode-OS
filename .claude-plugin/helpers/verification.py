@@ -60,18 +60,32 @@ def evidence_strength_display(labels: list) -> str:
 
 # Trusted PATH-resolved tool names (no absolute paths)
 TRUSTED_TOOLS = {
-    "python", "python3", "py", "node", "npm", "npx", "yarn", "pnpm",
+    # Python
+    "python", "python3", "py",
     "pytest", "py.test", "unittest",
+    "pip", "pip3", "pipx",
+    "poetry", "uv", "hatch",
+    "flake8", "mypy", "ruff", "pylint",
+    # JavaScript / TypeScript
+    "node", "npm", "npx", "yarn", "pnpm",
+    "deno", "bun",
+    "jest", "mocha", "vitest", "jasmine",
+    "tsc", "eslint",
+    # Mobile / Cross-platform
     "flutter", "dart",
+    # Systems
     "cargo", "rustc",
     "go",
+    # Build tools
     "make", "gradle", "mvn", "ant",
-    "jest", "mocha", "vitest", "jasmine",
-    "rspec", "bundle",
+    # Ruby
+    "rspec", "bundle", "bundler",
+    # PHP
     "php", "composer",
+    # .NET
     "dotnet",
+    # Apple
     "swift", "xcodebuild",
-    "tsc", "eslint", "flake8", "mypy", "ruff", "pylint",
 }
 
 # Shell trampolines — never allowed as the executable

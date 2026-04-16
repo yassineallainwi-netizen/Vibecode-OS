@@ -168,6 +168,27 @@ class TestValidateCommand(unittest.TestCase):
         ok, reason = validate_command("unknown_tool_xyz arg1")
         self.assertFalse(ok, f"Unknown tool should be rejected: {reason!r}")
 
+    def test_modern_js_tools_trusted(self):
+        """deno and bun must be accepted as trusted tools."""
+        from verification import validate_command
+        for tool in ("deno test", "bun test"):
+            ok, reason = validate_command(tool)
+            self.assertTrue(ok, f"{tool!r} should be trusted: {reason!r}")
+
+    def test_modern_python_tools_trusted(self):
+        """poetry, uv, pip, pipx, hatch must be accepted as trusted tools."""
+        from verification import validate_command
+        for tool in ("poetry run pytest", "uv run pytest", "pip install -r requirements.txt",
+                     "pipx run pytest", "hatch run test"):
+            ok, reason = validate_command(tool)
+            self.assertTrue(ok, f"{tool!r} should be trusted: {reason!r}")
+
+    def test_bundler_trusted(self):
+        """bundler (Ruby alias) must be accepted as a trusted tool."""
+        from verification import validate_command
+        ok, reason = validate_command("bundler exec rspec")
+        self.assertTrue(ok, f"bundler should be trusted: {reason!r}")
+
     def test_nonzero_exit_returns_command_failed(self):
         """classify_evidence with nonzero exit must return command_failed (not repo_observed or command_verified)."""
         from verification import classify_evidence, triage_log
