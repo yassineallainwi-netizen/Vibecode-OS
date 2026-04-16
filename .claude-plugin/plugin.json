@@ -6,7 +6,8 @@
     "skills/vibe-start",
     "skills/vibe-resume",
     "skills/vibe-status",
-    "skills/vibe-done"
+    "skills/vibe-done",
+    "skills/vibe-ship"
   ],
   "capabilities_required": [
     "file_read",
