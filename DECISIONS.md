@@ -73,6 +73,17 @@
 
 ---
 
+## Decision 010
+- Date: 2026-04-16
+- Feature: feature/spec-template-rewrite
+- Status: Accepted
+- Decision: Canonical `src/templates/SPEC.md` with required frontmatter (ID, Status, Complexity, Change kind), `## Touches`, per-criterion `[verify=cmd|repo|spec|user]` tags, and an explicit `## Verification plan`. All future features use this template. All historical specs rewritten to it (originals preserved as `SPEC_v1.md`).
+- Why: Historical specs used 4 inconsistent schemas across 10 features; `## Complexity` appeared in 1/10 specs; `## Touches` in 0/10; evidence labels `user_reported` and `spec_expected` appeared in 0 VERIFY.md files — the label model was half-dead. A uniform schema makes the spec corpus a reliable substrate for self-improvement loops (hardening-round auto-detect, drift log, evidence-label coverage metrics).
+- Tradeoff: Rewriting 10 historical specs is non-trivial effort; rewrites are documentation hygiene only (no scope changes, no reopened features). Original specs preserved as `SPEC_v1.md`.
+- Consequence: `/vibe-start` now reads `.claude/templates/SPEC.md` to draft the spec, guaranteeing new features use the canonical format. `/vibe-done` honours `Change kind` and per-criterion `[verify=...]` tags when classifying evidence. `/vibe-status` runs scope-drift check against `## Touches`. Conformance test `tests/smoke/test_spec_conformance.py` gates all future features against the schema.
+
+---
+
 ## Decision 009
 - Date: 2026-03-21
 - Feature: v2.0.1 hardening
