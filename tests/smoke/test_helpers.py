@@ -168,14 +168,28 @@ class TestValidateCommand(unittest.TestCase):
         ok, reason = validate_command("unknown_tool_xyz arg1")
         self.assertFalse(ok, f"Unknown tool should be rejected: {reason!r}")
 
-    def test_nonzero_exit_not_verified(self):
-        """classify_evidence with nonzero exit must never produce command_verified."""
+    def test_nonzero_exit_returns_command_failed(self):
+        """classify_evidence with nonzero exit must return command_failed (not repo_observed or command_verified)."""
         from verification import classify_evidence, triage_log
         output = "Error: something went wrong"
         triage = triage_log(output)
         label = classify_evidence(1, output, triage)
-        self.assertNotEqual(label, "command_verified",
-                            f"Nonzero exit must not produce command_verified, got: {label!r}")
+        self.assertEqual(label, "command_failed",
+                         f"Nonzero exit must produce command_failed, got: {label!r}")
+
+    def test_failed_tests_returns_command_failed(self):
+        """classify_evidence with tests_failed > 0 must return command_failed, not repo_observed."""
+        from verification import classify_evidence
+        label = classify_evidence(0, "some output", {"tests_run": 5, "tests_failed": 2})
+        self.assertEqual(label, "command_failed",
+                         f"Failed tests must produce command_failed, got: {label!r}")
+
+    def test_command_failed_maps_to_weak_strength(self):
+        """command_failed label must map to weak evidence strength (displayed as low, not high)."""
+        from verification import evidence_strength_display
+        strength = evidence_strength_display(["command_failed"])
+        self.assertEqual(strength, "low",
+                         f"command_failed must display as 'low' strength, got: {strength!r}")
 
     def test_shell_false_asserted(self):
         """subprocess.run must be called with shell=False."""

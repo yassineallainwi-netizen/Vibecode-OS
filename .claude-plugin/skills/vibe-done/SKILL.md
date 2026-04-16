@@ -123,6 +123,11 @@ After execution:
 1. Strip ANSI from output
 2. Triage output: extract test counts, failing files, error classes (call `src/helpers/verification.py triage_log` or apply inline pattern matching)
 3. Classify evidence: use `classify_evidence(exit_code, output, triage)` logic
+   - Non-zero exit → `command_failed` (strength: low) — a failing run is NOT positive evidence
+   - Zero exit, no output → `repo_observed` (strength: high) — ran, nothing complained
+   - Zero exit, tests_run == 0 → `repo_observed` — ran, but nothing was asserted
+   - Zero exit, tests_failed > 0 → `command_failed` (strength: low) — tests ran but failed
+   - Zero exit, tests passed → `command_verified` (strength: high)
 4. Compute output SHA-256 for audit trail: `compute_output_hash(stripped_output)`
 
 **Mini verification-resume trigger:** if any of these occur:

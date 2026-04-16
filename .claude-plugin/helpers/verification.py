@@ -33,6 +33,7 @@ LABEL_TO_STATE = {
     "repo_observed": "strong",
     "user_reported": "partial",
     "spec_expected": "weak",
+    "command_failed": "weak",   # command ran but exited non-zero or tests failed
 }
 
 
@@ -333,23 +334,30 @@ def triage_log(output: str) -> dict:
 def classify_evidence(exit_code: int, output: str, triage: dict) -> str:
     """
     Given execution results, return the evidence label.
-    Never returns command_verified for non-zero exit code.
+
+    Labels:
+    - command_verified  — command ran, succeeded, tests passed (strength: high)
+    - repo_observed     — command ran successfully but produced no assertions
+                          (empty output, 0 tests detected) (strength: high)
+    - command_failed    — command ran but exited non-zero or tests failed;
+                          evidence is weak, NOT a positive signal (strength: low)
+    - never returns command_verified for non-zero exit code or failed tests
     """
     if exit_code != 0:
-        return "repo_observed"  # command ran but failed
+        return "command_failed"  # command ran but failed — weak evidence only
 
-    # Downgrade weak success cases
+    # Downgrade weak success cases (ran fine, no assertions made)
     if not output.strip():
-        return "repo_observed"  # empty output
+        return "repo_observed"  # empty output — tool ran, nothing complained
 
     tests_run = triage.get("tests_run")
     tests_failed = triage.get("tests_failed")
 
     if tests_run is not None and tests_run == 0:
-        return "repo_observed"  # 0 tests detected
+        return "repo_observed"  # 0 tests detected — tool ran, nothing tested
 
     if tests_failed is not None and tests_failed > 0:
-        return "repo_observed"  # tests ran but failed
+        return "command_failed"  # tests ran but failed — weak evidence, not positive
 
     return "command_verified"
 
