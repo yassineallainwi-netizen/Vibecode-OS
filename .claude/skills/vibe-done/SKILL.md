@@ -33,6 +33,17 @@ Every acceptance criterion must carry exactly one evidence label:
 
 **Display mapping:** command_verified/repo_observed → high; user_reported → medium; spec_expected → low
 
+## Verification rationalizations to resist
+These shortcuts feel reasonable but silently degrade quality:
+
+| Rationalization | Why it fails |
+|-----------------|--------------|
+| "The user said it works — that's enough" | `user_reported` is weak evidence. Run the command; observe the output. |
+| "The code looks right, I don't need to check" | "Looks right" is `spec_expected` at best. Observable evidence is required. |
+| "Most criteria are met, the rest are minor" | Unverified core criteria → Partially Complete. Don't round up. |
+| "Tests passed on the first try, nothing's wrong" | Shallow tests always pass. Check what was actually tested — e.g., 0 tests run exits 0. |
+| "I'll skip the simplicity check, the skill is long enough" | Over-engineered code creates future rework. A 30-second scan prevents 2 hours of debt. |
+
 ## Command approval rule
 Before running a verification command, check `.claude/approved_commands.json`:
 - If command is approved for this repo (matching cmd_hash + repo_id): run without prompting
@@ -124,6 +135,19 @@ When triggered, emit before the classification step:
 > - Last command: `[cmd]` — exit code [N], [X] tests run
 > - Evidence: [label] (reason for downgrade if applicable)
 > - Safest next action: [fix failing test / add tests / verify manually]
+
+### 3.8. Simplicity check (Complete candidates only)
+Skip if already classifying as Not Ready or Partially Complete.
+
+Scan the files the user says changed. Ask:
+- Is any abstraction doing work that a plain function or simple conditional would handle?
+- Is any library dependency doing something 5 lines of stdlib would cover?
+- Is the same thing done two different ways in the same file?
+
+If yes: add a brief note to the Known Gaps section of VERIFY.md as:
+`[SIMPLICITY] [description] — consider simplifying before next feature`
+
+This is not a blocker and does not change the classification. It is a forward flag only.
 
 ### 4. Classify the work
 

@@ -4,12 +4,13 @@ A structured feature-by-feature workflow for solo vibe coders using Claude Code.
 
 ## What it does
 
-Four project skills that give you memory, structure, and verification:
+Five project skills that take you reliably from day zero to shipping:
 
 - **`/vibe-resume`** — Restore context at the start of a session. Reads your project files and tells you where you left off.
-- **`/vibe-start`** — Spec a new feature. Claude asks questions, drafts a SPEC.md, and sets it as the active feature.
+- **`/vibe-start`** — Spec a new feature. Claude asks questions, drafts a SPEC.md, and sets it as the active feature. Also handles day-zero project inception (no files yet).
 - **`/vibe-status`** — Check progress on the active feature. Shows what's done, what's missing, and what to do next.
 - **`/vibe-done`** — Verify and close a feature. Walks through acceptance criteria, writes VERIFY.md, updates the session log.
+- **`/vibe-ship`** — Check release readiness and draft a release. Gates on honest evidence, produces RELEASE_NOTES.md and a Git Ghost tag command.
 
 ## Who it's for
 
@@ -24,7 +25,8 @@ your-project/
 │   │   ├── vibe-start/SKILL.md
 │   │   ├── vibe-resume/SKILL.md
 │   │   ├── vibe-status/SKILL.md
-│   │   └── vibe-done/SKILL.md
+│   │   ├── vibe-done/SKILL.md
+│   │   └── vibe-ship/SKILL.md
 │   ├── active_feature          # tracks the current feature ID
 │   ├── context/                # compact JSON artifacts (token-efficient resumption)
 │   └── runtime/                # capability cache and probes
@@ -64,22 +66,30 @@ git clone https://github.com/yassineallainwi-netizen/Vibecode-OS.git
 
 Running the installer again is safe — skills update if changed, your data files are never overwritten.
 
-## Workflow
+## Workflow — from 0 to shipping
 
+**Day zero (empty repo):**
+1. Run **`/vibe-start`** — Claude runs inception: 3 focused questions, writes PROJECT_CONTEXT.md, sets up the structure, then drafts your first feature's SPEC.md.
+
+**Every session after that:**
 1. **`/vibe-resume`** — Start every session here. Get a summary of where things stand.
-2. **`/vibe-start`** — Describe what you want to build. Claude drafts a spec, you confirm.
+2. **`/vibe-start`** — Describe what you want to build next. Claude drafts a spec, you confirm.
 3. **Build it** — Write code normally. Claude has context from the spec.
 4. **`/vibe-status`** — Check what's done and what's left.
 5. **`/vibe-done`** — Walk through verification. Claude writes the record and closes the feature.
+
+**When ready to ship:**
+6. **`/vibe-ship`** — Claude gates on honest readiness (features complete? README with install/usage? verify command passes?), drafts RELEASE_NOTES.md from your VERIFY and DECISIONS files, and hands you the Git Ghost tag/push commands.
 
 ## Commands
 
 | Command | What it does | When to use it |
 |---------|-------------|----------------|
 | `/vibe-resume` | Reads context files, summarizes project state | Start of every session |
-| `/vibe-start` | Asks questions, drafts SPEC.md, sets active feature | When you want to build something new |
+| `/vibe-start` | Runs inception on day zero; otherwise asks questions, drafts SPEC.md, sets active feature | When you want to build something new (or start a project) |
 | `/vibe-status` | Reports progress against acceptance criteria | Mid-feature, to check where you are |
 | `/vibe-done` | Verifies work, writes VERIFY.md, updates session log | When you think a feature is finished |
+| `/vibe-ship` | Gates on readiness, drafts RELEASE_NOTES.md, suggests version tag | When you're ready to ship a release |
 
 ## QA Checklist
 
