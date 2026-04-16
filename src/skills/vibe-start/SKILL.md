@@ -151,17 +151,23 @@ If safely classified as trivial:
 ```markdown
 # Feature: [Name]
 
-## Complexity
-trivial
+- ID: FEATURE-NNN-short-slug
+- Status: Locked
+- Date locked: [today's date]
+- Complexity: trivial
+- Change kind: [behavioral / instruction-only]
 
 ## Goal
 [One sentence]
 
-## Scope
-[What will change — keep it brief]
+## Touches
+- [file expected to change]
 
-## Acceptance Criteria
-- [ ] [Single clear condition]
+## Acceptance criteria
+- [ ] [verify=cmd|repo|spec|user] [Single clear condition]
+
+## Verification plan
+- AC-1: [exact check]
 ```
 
 5. **Write `.claude/active_feature`** with the new feature ID.
@@ -188,31 +194,57 @@ Glob `**/SPEC.md`, filter to `features/FEATURE-NNN-slug/SPEC.md`. Count existing
 Sanitize the slug (see Slug sanitization rule).
 
 ### 5. Draft the SPEC.md (normal path)
+Read `.claude/templates/SPEC.md` if it exists (installed by install.py). Use it as the structural guide. If it doesn't exist, use the format below.
+
 Create `features/FEATURE-NNN-slug/SPEC.md`:
 
 ```markdown
 # Feature: [Name]
 
-## Complexity
-[trivial / normal / complex / high-risk]
+- ID: FEATURE-NNN-short-slug
+- Status: Locked
+- Date locked: [today's date]
+- Complexity: [trivial / normal / complex / high-risk]
+- Change kind: [behavioral / instruction-only / mixed]
 
 ## Goal
 [One sentence: what the user can do after this is built]
 
-## What it should do
-- [Concrete behavior from the conversation]
+## Touches
+- [file or module expected to change]
+- [file or module expected to change]
 
-## What it should NOT do
-- [Scope boundary]
+## Acceptance criteria
+- [ ] [verify=cmd] [Criterion that requires a passing command run]
+- [ ] [verify=repo] [Criterion checkable by inspecting files or structure]
+- [ ] [verify=spec] [Instruction-only criterion — skill wording, Claude behavior, prose]
+- [ ] [verify=user] [Criterion requiring user to observe and confirm behavior]
 
-## Acceptance Criteria
-- [ ] [Plain-language acceptance test]
+## Verification plan
+- AC-1: [exact command, file path, or question to validate]
+- AC-2: [exact command, file path, or question to validate]
 
-## Risks and edge cases
-- [Anything flagged during the conversation]
+## Out of scope
+[Non-obvious exclusions only — skip if covered by PROJECT_CONTEXT.md]
+
+## Known risks
+[Specific risks only — skip if none]
 ```
 
-Fill every section from the conversation. No placeholders.
+**Change kind guidance — decide this honestly:**
+- `behavioral` — code runs differently after the change (new logic, new files, new commands)
+- `instruction-only` — only skill text, Claude behavior prompts, docs, or wording changed; no code behavior changes
+- `mixed` — both behavioral changes and instruction-only changes in the same feature
+
+**Touches guidance:** list the specific files and directories expected to change. This is used by `/vibe-status` to detect scope drift mid-feature.
+
+**Verification tag guidance — pick the most honest tag for each criterion:**
+- `[verify=cmd]` — a command will be run and must exit 0 with meaningful output
+- `[verify=repo]` — Claude inspects files/structure directly to confirm the criterion
+- `[verify=spec]` — the criterion is about skill wording or Claude behavior; no command can verify it (spec_expected evidence)
+- `[verify=user]` — behavioral outcome the user must observe and confirm
+
+Fill every section from the conversation. No placeholders. Do NOT use `[TODO:]` in the spec.
 
 ### 6. Set the active feature (normal path)
 Write the sanitized feature ID (e.g. `FEATURE-003-auth-login`) to `.claude/active_feature`.
