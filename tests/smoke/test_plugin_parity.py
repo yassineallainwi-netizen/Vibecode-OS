@@ -22,6 +22,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SKILL_NAMES = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done"]
+SHARED_FILES = ["recovery.md", "evidence.md"]
 HELPER_FILES = ["context.py", "claude_md.py", "verification.py", "approval.py", "compaction.py"]
 
 
@@ -105,6 +106,26 @@ def plugin_skills_match_source(verbose: bool = False) -> tuple:
     if mismatches:
         raise AssertionError("Plugin skills diverge from source:\n" + "\n".join(f"  {m}" for m in mismatches))
     return True, f"All {len(SKILL_NAMES)} plugin skill files match source content (hash verified)"
+
+
+def shared_snippets_present_and_match(verbose: bool = False) -> tuple:
+    """_shared/ snippets exist in src/, .claude/, and .claude-plugin/ and are byte-identical."""
+    mismatches = []
+    for filename in SHARED_FILES:
+        src = REPO_ROOT / "src" / "skills" / "_shared" / filename
+        standalone = REPO_ROOT / ".claude" / "skills" / "_shared" / filename
+        plugin = REPO_ROOT / ".claude-plugin" / "skills" / "_shared" / filename
+        if not src.exists():
+            raise AssertionError(f"Source shared snippet missing: {src}")
+        for path, label in [(standalone, ".claude"), (plugin, ".claude-plugin")]:
+            if not path.exists():
+                mismatches.append(f"_shared/{filename}: missing in {label}/")
+                continue
+            if _file_hash(src) != _file_hash(path):
+                mismatches.append(f"_shared/{filename}: content differs in {label}/")
+    if mismatches:
+        raise AssertionError("Shared snippets out of sync:\n" + "\n".join(f"  {m}" for m in mismatches))
+    return True, f"All {len(SHARED_FILES)} shared snippets present and identical across src/, .claude/, .claude-plugin/"
 
 
 def standalone_mode_unchanged(verbose: bool = False) -> tuple:
@@ -260,6 +281,7 @@ TESTS = [
     ("plugin_skills_present", plugin_skills_present, True),
     ("plugin_helpers_present", plugin_helpers_present, True),
     ("plugin_skills_match_source", plugin_skills_match_source, True),
+    ("shared_snippets_present_and_match", shared_snippets_present_and_match, True),
     ("standalone_mode_unchanged", standalone_mode_unchanged, True),
     ("rollback_removes_plugin", rollback_removes_plugin, True),
     ("hook_path_restriction", hook_path_restriction, True),

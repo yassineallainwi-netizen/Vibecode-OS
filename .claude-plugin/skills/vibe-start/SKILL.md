@@ -3,6 +3,9 @@ name: vibe-start
 description: Start a new feature with a structured spec. Use when the user wants to begin building something new.
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep, Edit, Bash
+shared_references:
+  - _shared/recovery.md
+  - _shared/evidence.md
 ---
 
 # /vibe-start — Start a New Feature
@@ -117,8 +120,7 @@ Read `.claude/active_feature`.
 
 **Validate format first:** content must match `^FEATURE-\d{3}-[a-z0-9-]+$`. If malformed, clear the file silently and continue.
 
-**If it contains a valid feature ID and that folder exists:**
-> ⚠️ VibeCode Recovery: You have an active feature: `FEATURE-NNN-slug`. Close it with `/vibe-done`, or reply **override** to start a new one anyway.
+**If it contains a valid feature ID and that folder exists:** → _shared/recovery.md **R3** (conflicting active feature).
 
 - If user replies **override**: replace `.claude/active_feature` with the new feature ID when created.
 - If the active feature is malformed (folder exists but no SPEC.md): allow override without further prompts.

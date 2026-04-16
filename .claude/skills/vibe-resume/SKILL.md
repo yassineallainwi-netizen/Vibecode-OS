@@ -3,6 +3,9 @@ name: vibe-resume
 description: Resume work from a previous session. Use at the start of a new session to restore context.
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Bash
+shared_references:
+  - _shared/recovery.md
+  - _shared/evidence.md
 ---
 
 # /vibe-resume — Resume a Previous Session
@@ -97,7 +100,7 @@ Read `DECISIONS.md` briefly — extract the 2-3 most recent decisions only. If b
 
 **If `.claude/active_feature` contains a valid feature ID:**
 - Found in ground-truth scan → read its SPEC.md and any VERIFY.md; proceed to Step 4.5
-- NOT found → ⚠️ VibeCode Recovery: broken reference. Clear `.claude/active_feature`, fall through to ground-truth scan.
+- NOT found → _shared/recovery.md **R1** (broken reference). Clear `.claude/active_feature`, fall through to ground-truth scan.
 
 **If `.claude/active_feature` is empty or just cleared:**
 Use ground-truth scan:
@@ -105,9 +108,7 @@ Use ground-truth scan:
 - 1 feature → read its SPEC.md; note in manifest; ask to resume or start new
 - 2+ features → read highest-numbered SPEC.md; list up to 2 others; ask which to resume
 
-**Malformed feature (SPEC.md found but outside expected path):**
-> ⚠️ VibeCode Recovery: Feature exists but has no SPEC.md — malformed.
-> Reply **Delete and reset** to clear active_feature only (no files deleted), or write a spec manually.
+**Malformed feature (SPEC.md found but outside expected path):** → _shared/recovery.md **R2** (malformed feature).
 Wait for reply. If "Delete and reset": clear `.claude/active_feature` only. Continue to Step 5.
 
 ### 4.5. Check git branch alignment

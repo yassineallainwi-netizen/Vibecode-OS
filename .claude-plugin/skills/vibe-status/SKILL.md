@@ -3,6 +3,9 @@ name: vibe-status
 description: Check the current status of the active feature or all features. Use when the user wants a progress report.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Bash
+shared_references:
+  - _shared/recovery.md
+  - _shared/evidence.md
 ---
 
 # /vibe-status — Check Feature Progress
@@ -20,19 +23,9 @@ Validate `.claude/active_feature` format before use: must match `^FEATURE-\d{3}-
 ### 1. Find the active feature
 Read `.claude/active_feature`. Validate format.
 
-**If malformed format:**
-> ⚠️ VibeCode Recovery: active_feature contains an invalid value. Use `/vibe-resume` to repair.
-Stop here.
+**If malformed format or folder does not exist:** → _shared/recovery.md **R1** (broken reference). Stop here.
 
-**If contains a valid feature ID but folder does not exist:**
-> ⚠️ VibeCode Recovery: Active feature reference is broken — `FEATURE-NNN-slug` doesn't exist.
-> Use `/vibe-resume` to repair the active feature state.
-Stop here.
-
-**If contains a valid feature ID, folder exists, but no SPEC.md:**
-> ⚠️ VibeCode Recovery: Feature `FEATURE-NNN-slug` has no SPEC.md — it's malformed. Cannot report status without acceptance criteria.
-> Use `/vibe-resume` to repair or reset this state.
-Stop here.
+**If folder exists but no SPEC.md:** → _shared/recovery.md **R2** (malformed feature). Stop here.
 
 ### 2a. Active feature exists with SPEC.md
 Read `features/<feature-id>/SPEC.md` and `features/<feature-id>/VERIFY.md` (if it exists).

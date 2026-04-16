@@ -3,6 +3,9 @@ name: vibe-done
 description: Finish a feature with verification. Use when the user thinks a feature is complete.
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Edit, Bash
+shared_references:
+  - _shared/recovery.md
+  - _shared/evidence.md
 ---
 
 # /vibe-done — Finish and Verify a Feature
@@ -71,9 +74,8 @@ A feature "has no VERIFY.md" if no `features/FEATURE-NNN-slug/VERIFY.md` exists 
 ### 1. Find the active feature
 Read `.claude/active_feature`. Validate format (`^FEATURE-\d{3}-[a-z0-9-]+$`).
 
-**If malformed or pointing to a missing folder:**
-> ⚠️ VibeCode Recovery: Active feature `FEATURE-NNN-slug` doesn't exist.
-Clear `.claude/active_feature`. Scan `features/` for valid folders without a VERIFY.md. If one exists, ask to close it. If none: "Nothing to close. Use `/vibe-start`." Stop here.
+**If malformed or pointing to a missing folder:** → _shared/recovery.md **R1** (broken reference).
+Scan `features/` for valid folders without a VERIFY.md. If one exists, ask to close it. If none: "Nothing to close. Use `/vibe-start`." Stop here.
 
 **If empty or missing:**
 Glob `**/SPEC.md`, apply feature scan rule. Check `**/VERIFY.md` to find features without VERIFY.md. If one, use it. If multiple, ask which. If none: "Nothing to close. Use `/vibe-start`."
@@ -82,9 +84,7 @@ Glob `**/SPEC.md`, apply feature scan rule. Check `**/VERIFY.md` to find feature
 > ⚠️ Mismatch: `.claude/active_feature` says `FEATURE-NNN` but you're asking to close `FEATURE-MMM`. Which should I verify?
 Wait for reply before proceeding.
 
-**Read SPEC.md:** if folder has no SPEC.md:
-> ⚠️ VibeCode Recovery: Feature `FEATURE-NNN-slug` is malformed — no SPEC.md. Cannot verify without acceptance criteria.
-> Reply **Delete and reset** to clear `.claude/active_feature` (no files deleted), or write a spec manually.
+**Read SPEC.md:** if folder has no SPEC.md: → _shared/recovery.md **R2** (malformed feature).
 Stop and wait.
 
 **If VERIFY.md already exists:** read it — this is the current state; it will be overwritten if verification proceeds.

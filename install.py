@@ -29,28 +29,36 @@ def install_standalone(target, src_dir, created, updated, unchanged, preserved):
 
     # 2. Managed skill files — update if content differs, skip if identical
     skills_src = os.path.join(src_dir, "src", "skills")
-    skill_names = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done"]
+    skill_names = ["vibe-start", "vibe-resume", "vibe-status", "vibe-done", "_shared"]
 
     for skill_name in skill_names:
         skill_src_dir = os.path.join(skills_src, skill_name)
         skill_target_dir = os.path.join(skills_target, skill_name)
-        skill_file = os.path.join(skill_target_dir, "SKILL.md")
-        src_file = os.path.join(skill_src_dir, "SKILL.md")
-        label = f".claude/skills/{skill_name}/SKILL.md"
-
         os.makedirs(skill_target_dir, exist_ok=True)
 
-        if not os.path.exists(skill_file):
-            shutil.copy2(src_file, skill_file)
-            created.append(label)
+        # _shared/ contains multiple .md files; all others contain only SKILL.md
+        if skill_name == "_shared":
+            import glob as _glob
+            md_files = [os.path.basename(f) for f in _glob.glob(os.path.join(skill_src_dir, "*.md"))]
         else:
-            src_content = read_file(src_file)
-            dst_content = read_file(skill_file)
-            if src_content != dst_content:
+            md_files = ["SKILL.md"]
+
+        for md_filename in md_files:
+            src_file = os.path.join(skill_src_dir, md_filename)
+            skill_file = os.path.join(skill_target_dir, md_filename)
+            label = f".claude/skills/{skill_name}/{md_filename}"
+
+            if not os.path.exists(skill_file):
                 shutil.copy2(src_file, skill_file)
-                updated.append(label)
+                created.append(label)
             else:
-                unchanged.append(label)
+                src_content = read_file(src_file)
+                dst_content = read_file(skill_file)
+                if src_content != dst_content:
+                    shutil.copy2(src_file, skill_file)
+                    updated.append(label)
+                else:
+                    unchanged.append(label)
 
     # 3. User data files — never overwrite
     templates_src = os.path.join(src_dir, "src", "templates")
