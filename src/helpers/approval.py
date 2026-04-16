@@ -10,7 +10,15 @@ import json
 import os
 import time
 
-from context import atomic_write
+try:
+    from context import atomic_write
+except ImportError:
+    # Fallback for invocation as python -m, pip install -e, or Windows symlinks
+    # where sys.path[0] may not be src/helpers/.
+    import sys
+    import pathlib
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    from context import atomic_write
 
 SCHEMA_VERSION = 1
 
