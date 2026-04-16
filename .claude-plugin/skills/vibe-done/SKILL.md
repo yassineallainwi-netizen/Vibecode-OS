@@ -99,6 +99,24 @@ If 0 tracked files changed AND the user has not described any work done:
 
 Classify as `Not Ready to Close`. Do not parse criteria without at least one file change or explicit user description of work done.
 
+### 2.5. Complexity-drift check
+Read `## Complexity` from the active feature's SPEC.md (values: trivial / normal / complex / high-risk).
+Compare declared complexity against observed scope:
+
+| Signal | Upgrade rule |
+|--------|-------------|
+| `trivial` declared, but >2 files changed OR new dependency OR schema change | → upgrade to `normal` |
+| `normal` declared, but 3+ subsystems touched OR new dep + schema change | → upgrade to `complex` |
+| `complex` declared, but security/auth/persistence touched | → upgrade to `high-risk` |
+
+**If drift detected:**
+1. Update `## Complexity` in SPEC.md with the new tier and note: `"Complexity upgraded during verification — original estimate was [old]."` 
+2. Append to Known Gaps in VERIFY.md: `"[COMPLEXITY_DRIFT] Feature grew from [old] to [new] during build."`
+3. Do NOT immediately mark Complete — re-evaluate acceptance criteria against the new tier.
+4. User can force-close by saying "accept drift" — record this in VERIFY.md.
+
+If drift is not detected, proceed normally.
+
 ### 3. Collect evidence
 Ask conversationally:
 > "What's been built and tested? Walk me through it."
