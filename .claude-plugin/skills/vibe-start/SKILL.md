@@ -30,9 +30,29 @@ If `SESSION_LOG.md` contains a "Context pointer" from a previous `/vibe-done` th
 ### 1. Read project context
 Read the file `PROJECT_CONTEXT.md` in the **project root directory** (same level as `.claude/` folder, not inside it).
 
-If it's missing or a blank placeholder, ask:
-> "What is this project and what's it built with?"
-Create `PROJECT_CONTEXT.md` from their answer, then continue.
+If it exists and has project-specific content, continue to step 1.3.
+
+**Inception mode — triggers only when ALL of these are true:**
+- `PROJECT_CONTEXT.md` is missing or a blank placeholder
+- No `features/FEATURE-NNN-slug/SPEC.md` exists anywhere
+- `AGENTS.md` is missing or classifies as `high_template`
+
+When in inception mode, ask exactly this batch of 3 questions in one turn:
+> "Looks like day zero. Three quick questions to set up the project:
+> 1. **What is this project and who is it for?** (one sentence)
+> 2. **What's it built with?** (languages/frameworks, or 'not decided yet')
+> 3. **What's the smallest first version going to do?** (what a user can do once v0.1 is real)"
+
+Wait for the answers. Then:
+- Write `PROJECT_CONTEXT.md` in the project root using the answers. Fill the "What is this?", "What's it built with?", and "What's the current state?" sections directly from the user's answers. Leave "Important rules" blank with a single line: `[TODO: add as you go]`.
+- Ensure the `features/` directory exists (create if missing — no files inside yet).
+- Note the inception in a single line in the response: "Project initialized. PROJECT_CONTEXT.md written."
+
+Then continue to step 1.3.
+
+**Partial inception (PROJECT_CONTEXT blank but features exist):** this is a recovery case — do not re-ask the 3-question batch. Ask only the minimum needed:
+> "PROJECT_CONTEXT.md is blank but features exist. What is this project and what's it built with?"
+Create PROJECT_CONTEXT.md from the answer, then continue.
 
 ### 1.3. Scan for tech-stack signals
 Silently scan root-bounded allowed files (see Security rules). Infer tech stack only from literal repo evidence.
@@ -266,6 +286,23 @@ Using findings from the tech-stack scan (step 1.3), propose verification command
 - Surface as advisory note only: "Consider adding to AGENTS.md: `verify_cmd: [proposed]`"
 - Do not prompt or block — this is a suggestion, not a question
 
+### 6.8. Source-check flag (normal path — external library/API involved)
+Before locking the spec, scan the drafted "What it should do" for external dependencies — named libraries (e.g., Stripe, OpenAI, Supabase, Firebase), HTTP APIs, new frameworks, or SDKs not already in the project.
+
+**If any external dependency is mentioned and is NOT already in the repo's dependency files** (package.json, pyproject.toml, Cargo.toml, go.mod, etc.): append a single advisory bullet to the SPEC.md `## Risks and edge cases` section:
+
+```
+- [UNVERIFIED_API] `[library/api name]` — check official docs before implementing. Training data may be outdated. Cite source URL in code comments for the exact version in use.
+```
+
+**Rules:**
+- One line per distinct library/API. Do not spam.
+- Advisory only — never blocks the spec.
+- If the library is already in the dependency file (same version): skip (it's a known quantity).
+- Do not fetch docs at this step — this is a flag, not an action. Docs get fetched during build.
+
+This prevents the #1 vibecoding failure: implementing against hallucinated API signatures.
+
 ### 7. Surface mode and risk flags (normal path)
 Before confirming the spec, show a compact header using repo maturity data from step 1.3:
 
@@ -295,3 +332,13 @@ If they request changes, update and ask again. Once confirmed:
 - Do not misclassify large or ambiguous work as trivial.
 - Never execute git commands.
 - Advisory guidance (git, README, AGENTS) never blocks feature creation.
+
+## Spec rationalizations to resist
+These shortcuts bypass the spec discipline and cost more time than they save:
+
+| Rationalization | Why it fails |
+|-----------------|--------------|
+| "This is small enough, I don't need a SPEC.md" | Every untracked feature is lost when the session ends. No exceptions. |
+| "I'll keep the scope in my head" | Scope drift happens silently. Write it down or it doesn't exist. |
+| "The user seems confident, no need to clarify" | Undiscovered ambiguity becomes rework. Surface the gap now. |
+| "I'll just start and adjust as we go" | Adjusting mid-build costs more tokens than asking one question upfront. |
