@@ -90,10 +90,14 @@ Stop and wait.
 **If VERIFY.md already exists:** read it — this is the current state; it will be overwritten if verification proceeds.
 
 ### 2. Zero-diff short-circuit
-If evidence shows no relevant file changes since the feature started and no concrete work was described by the user:
-> ⚠️ VibeCode Recovery: No relevant file changes detected.
+Check whether file changes exist since the feature started:
+- If Bash is available: run `git status --short` and `git diff --stat HEAD`. Compare against the modification time of `.claude/active_feature` (or the feature's SPEC.md if `.claude/active_feature` has no mtime available).
+- If git is unavailable: ask "What files did you change?" before parsing any criteria.
 
-Classify as `Not Ready to Close`. Do not parse criteria without evidence of work.
+If 0 tracked files changed AND the user has not described any work done:
+> ⚠️ VibeCode Recovery: No file changes detected since this feature started. Either (a) describe what you built so I can inspect, or (b) use `/vibe-status` to review the current state.
+
+Classify as `Not Ready to Close`. Do not parse criteria without at least one file change or explicit user description of work done.
 
 ### 3. Collect evidence
 Ask conversationally:
@@ -102,13 +106,13 @@ Ask conversationally:
 If the answer is vague or covers only some criteria, ask one focused follow-up. Do not re-ask about criteria already addressed.
 
 ### Evidence inspection rule
-Inspect in this order, bounded scope:
+Inspect in this order, bounded scope (cap: ≤10 files total):
 1. Active feature's SPEC.md (acceptance criteria)
 2. Existing VERIFY.md if present
 3. Files the user explicitly says were changed
 4. Obviously relevant files in the feature area if needed
 
-Do not run a heavy repo-wide scan. If evidence is unclear, ask which files changed, then evaluate.
+Stop at 10 files inspected. If evidence is still unclear after the cap, ask: "Which specific files matter most for this feature?" — do not expand the scan autonomously.
 
 ### Cross-check rule
 When the user claims specific quantitative evidence (e.g., "94 tests pass"):
@@ -360,7 +364,7 @@ After writing SESSION_LOG.md, automatically compact project state to `.claude/co
 
 **Complete:**
 > "Feature complete. VERIFY.md written."
-> **Next step:** Use `/vibe-start` to begin your next feature.
+> **Next step:** Run the app once to confirm nothing regressed, then `/vibe-start` for the next feature — or `/vibe-ship` if this completes a milestone.
 Clear `.claude/active_feature`.
 
 **Partially Complete:**
